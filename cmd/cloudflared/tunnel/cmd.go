@@ -24,6 +24,7 @@ import (
 	"github.com/cloudflare/cloudflared/metrics"
 	"github.com/cloudflare/cloudflared/origin"
 	"github.com/cloudflare/cloudflared/signal"
+	"github.com/cloudflare/cloudflared/socks"
 	"github.com/cloudflare/cloudflared/sshlog"
 	"github.com/cloudflare/cloudflared/sshserver"
 	"github.com/cloudflare/cloudflared/supervisor"
@@ -76,6 +77,9 @@ const (
 
 	// hostKeyPath is the path of the dir to save SSH host keys too
 	hostKeyPath = "host-key-path"
+
+	// socks5Flag is to enable the socks server to deframe
+	socks5Flag = "socks5"
 
 	noIntentMsg = "The --intent argument is required. Cloudflared looks up an Intent to determine what configuration to use (i.e. which tunnels to start). If you don't have any Intents yet, you can use a placeholder Intent Label for now. Then, when you make an Intent with that label, cloudflared will get notified and open the tunnels you specified in that Intent."
 )
@@ -133,6 +137,12 @@ func Commands() []*cli.Command {
 					Usage:   "Upstream endpoint URL, you can specify multiple endpoints for redundancy.",
 					Value:   cli.NewStringSlice("https://1.1.1.1/dns-query", "https://1.0.0.1/dns-query"),
 					EnvVars: []string{"TUNNEL_DNS_UPSTREAM"},
+				},
+				&cli.StringSliceFlag{
+					Name:    "bootstrap",
+					Usage:   "bootstrap endpoint URL, you can specify multiple endpoints for redundancy.",
+					Value:   cli.NewStringSlice("https://162.159.36.1/dns-query", "https://162.159.46.1/dns-query", "https://[2606:4700:4700::1111]/dns-query", "https://[2606:4700:4700::1001]/dns-query"),
+					EnvVars: []string{"TUNNEL_DNS_BOOTSTRAP"},
 				},
 			},
 			ArgsUsage: " ", // can't be the empty string or we get the default output
@@ -390,7 +400,18 @@ func StartServer(c *cli.Context, version string, shutdownC, graceShutdownC chan 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			errC <- websocket.StartProxyServer(logger, listener, host, shutdownC)
+			streamHandler := websocket.DefaultStreamHandler
+			if c.IsSet(socks5Flag) {
+				logger.Info("SOCKS5 server started")
+				streamHandler = func(wsConn *websocket.Conn, remoteConn net.Conn) {
+					dialer := socks.NewConnDialer(remoteConn)
+					requestHandler := socks.NewRequestHandler(dialer)
+					socksServer := socks.NewConnectionHandler(requestHandler)
+
+					socksServer.Serve(wsConn)
+				}
+			}
+			errC <- websocket.StartProxyServer(logger, listener, host, shutdownC, streamHandler)
 		}()
 		c.Set("url", "http://"+listener.Addr().String())
 	}
@@ -948,6 +969,13 @@ func tunnelFlags(shouldHide bool) []cli.Flag {
 			EnvVars: []string{"TUNNEL_DNS_UPSTREAM"},
 			Hidden:  shouldHide,
 		}),
+		altsrc.NewStringSliceFlag(&cli.StringSliceFlag{
+			Name:    "proxy-dns-bootstrap",
+			Usage:   "bootstrap endpoint URL, you can specify multiple endpoints for redundancy.",
+			Value:   cli.NewStringSlice("https://162.159.36.1/dns-query", "https://162.159.46.1/dns-query", "https://[2606:4700:4700::1111]/dns-query", "https://[2606:4700:4700::1001]/dns-query"),
+			EnvVars: []string{"TUNNEL_DNS_BOOTSTRAP"},
+			Hidden:  shouldHide,
+		}),
 		altsrc.NewDurationFlag(&cli.DurationFlag{
 			Name:    "grace-period",
 			Usage:   "Duration to accept new requests after cloudflared receives first SIGINT/SIGTERM. A second SIGINT/SIGTERM will force cloudflared to shutdown immediately.",
@@ -1073,6 +1101,13 @@ func tunnelFlags(shouldHide bool) []cli.Flag {
 			EnvVars: []string{"STDIN-CONTROL"},
 			Hidden:  true,
 			Value:   false,
+		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:    socks5Flag,
+			Usage:   "specify if this tunnel is running as a SOCK5 Server",
+			EnvVars: []string{"TUNNEL_SOCKS"},
+			Value:   false,
+			Hidden:  false,
 		}),
 	}
 }

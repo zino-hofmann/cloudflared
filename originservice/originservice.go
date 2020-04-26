@@ -17,7 +17,6 @@ import (
 	"github.com/cloudflare/cloudflared/hello"
 	"github.com/cloudflare/cloudflared/log"
 	"github.com/cloudflare/cloudflared/websocket"
-
 	"github.com/pkg/errors"
 )
 
@@ -47,6 +46,8 @@ func NewHTTPService(transport http.RoundTripper, url *url.URL, chunkedEncoding b
 }
 
 func (hc *HTTPService) Proxy(stream *h2mux.MuxedStream, req *http.Request) (*http.Response, error) {
+	const responseSourceOrigin = "origin"
+
 	// Support for WSGI Servers by switching transfer encoding from chunked to gzip/deflate
 	if !hc.chunkedEncoding {
 		req.TransferEncoding = []string{"gzip", "deflate"}
@@ -65,7 +66,9 @@ func (hc *HTTPService) Proxy(stream *h2mux.MuxedStream, req *http.Request) (*htt
 	}
 	defer resp.Body.Close()
 
-	err = stream.WriteHeaders(h1ResponseToH2Response(resp))
+	responseHeaders := h1ResponseToH2Response(resp)
+	responseHeaders = append(responseHeaders, h2mux.CreateResponseMetaHeader(h2mux.ResponseMetaHeaderField, responseSourceOrigin))
+	err = stream.WriteHeaders(responseHeaders)
 	if err != nil {
 		return nil, errors.Wrap(err, "error writing response header to HTTP origin")
 	}
@@ -105,7 +108,7 @@ func NewWebSocketService(tlsConfig *tls.Config, url *url.URL) (OriginService, er
 	}
 	shutdownC := make(chan struct{})
 	go func() {
-		websocket.StartProxyServer(log.CreateLogger(), listener, url.String(), shutdownC)
+		websocket.StartProxyServer(log.CreateLogger(), listener, url.String(), shutdownC, websocket.DefaultStreamHandler)
 	}()
 	return &WebsocketService{
 		tlsConfig: tlsConfig,
