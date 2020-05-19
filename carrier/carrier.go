@@ -73,17 +73,28 @@ func StartClient(conn Connection, stream io.ReadWriter, options *StartOptions) e
 // `Serve` always closes `listener`.
 func Serve(remoteConn Connection, listener net.Listener, shutdownC <-chan struct{}, options *StartOptions) error {
 	defer listener.Close()
-	for {
-		select {
-		case <-shutdownC:
-			return nil
-		default:
+	errChan := make(chan error)
+
+	go func() {
+		for {
 			conn, err := listener.Accept()
 			if err != nil {
-				return err
+				// don't block if parent goroutine quit early
+				select {
+				case errChan <- err:
+				default:
+				}
+				return
 			}
 			go serveConnection(remoteConn, conn, options)
 		}
+	}()
+
+	select {
+	case <-shutdownC:
+		return nil
+	case err := <-errChan:
+		return err
 	}
 }
 

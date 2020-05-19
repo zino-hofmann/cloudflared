@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cloudflare/cloudflared/carrier"
+	"github.com/cloudflare/cloudflared/cmd/cloudflared/cliutil"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/shell"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/token"
 	"github.com/cloudflare/cloudflared/sshgen"
@@ -18,8 +19,8 @@ import (
 	"golang.org/x/net/idna"
 
 	"github.com/cloudflare/cloudflared/log"
-	raven "github.com/getsentry/raven-go"
-	cli "gopkg.in/urfave/cli.v2"
+	"github.com/getsentry/raven-go"
+	"gopkg.in/urfave/cli.v2"
 )
 
 const (
@@ -71,17 +72,17 @@ func Commands() []*cli.Command {
 	return []*cli.Command{
 		{
 			Name:     "access",
-			Category: "Access (BETA)",
+			Aliases:  []string{"forward"},
+			Category: "Access",
 			Usage:    "access <subcommand>",
-			Description: `(BETA) Cloudflare Access protects internal resources by securing, authenticating and monitoring access 
+			Description: `Cloudflare Access protects internal resources by securing, authenticating and monitoring access 
 			per-user and by application. With Cloudflare Access, only authenticated users with the required permissions are 
 			able to reach sensitive resources. The commands provided here allow you to interact with Access protected 
-			applications from the command line. This feature is considered beta. Your feedback is greatly appreciated!
-			https://cfl.re/CLIAuthBeta`,
+			applications from the command line.`,
 			Subcommands: []*cli.Command{
 				{
 					Name:   "login",
-					Action: login,
+					Action: cliutil.ErrorHandler(login),
 					Usage:  "login <url of access application>",
 					Description: `The login subcommand initiates an authentication flow with your identity provider.
 					The subcommand will launch a browser. For headless systems, a url is provided.
@@ -97,7 +98,7 @@ func Commands() []*cli.Command {
 				},
 				{
 					Name:   "curl",
-					Action: curl,
+					Action: cliutil.ErrorHandler(curl),
 					Usage:  "curl [--allow-request, -ar] <url> [<curl args>...]",
 					Description: `The curl subcommand wraps curl and automatically injects the JWT into a cf-access-token
 					header when using curl to reach an application behind Access.`,
@@ -106,7 +107,7 @@ func Commands() []*cli.Command {
 				},
 				{
 					Name:        "token",
-					Action:      generateToken,
+					Action:      cliutil.ErrorHandler(generateToken),
 					Usage:       "token -app=<url of access application>",
 					ArgsUsage:   "url of Access application",
 					Description: `The token subcommand produces a JWT which can be used to authenticate requests.`,
@@ -117,24 +118,26 @@ func Commands() []*cli.Command {
 					},
 				},
 				{
-					Name:        "ssh",
-					Action:      ssh,
-					Aliases:     []string{"rdp", "tcp"},
+					Name:        "tcp",
+					Action:      cliutil.ErrorHandler(ssh),
+					Aliases:     []string{"rdp", "ssh", "smb"},
 					Usage:       "",
 					ArgsUsage:   "",
-					Description: `The ssh subcommand sends data over a proxy to the Cloudflare edge.`,
+					Description: `The tcp subcommand sends data over a proxy to the Cloudflare edge.`,
 					Flags: []cli.Flag{
 						&cli.StringFlag{
-							Name:  sshHostnameFlag,
-							Usage: "specify the hostname of your application.",
+							Name:    sshHostnameFlag,
+							Aliases: []string{"tunnel-host", "T"},
+							Usage:   "specify the hostname of your application.",
 						},
 						&cli.StringFlag{
 							Name:  sshDestinationFlag,
 							Usage: "specify the destination address of your SSH server.",
 						},
 						&cli.StringFlag{
-							Name:  sshURLFlag,
-							Usage: "specify the host:port to forward data to Cloudflare edge.",
+							Name:    sshURLFlag,
+							Aliases: []string{"listener", "L"},
+							Usage:   "specify the host:port to forward data to Cloudflare edge.",
 						},
 						&cli.StringSliceFlag{
 							Name:    sshHeaderFlag,
@@ -155,7 +158,7 @@ func Commands() []*cli.Command {
 				},
 				{
 					Name:        "ssh-config",
-					Action:      sshConfig,
+					Action:      cliutil.ErrorHandler(sshConfig),
 					Usage:       "",
 					Description: `Prints an example configuration ~/.ssh/config`,
 					Flags: []cli.Flag{
@@ -171,7 +174,7 @@ func Commands() []*cli.Command {
 				},
 				{
 					Name:        "ssh-gen",
-					Action:      sshGen,
+					Action:      cliutil.ErrorHandler(sshGen),
 					Usage:       "",
 					Description: `Generates a short lived certificate for given hostname`,
 					Flags: []cli.Flag{
@@ -188,7 +191,9 @@ func Commands() []*cli.Command {
 
 // login pops up the browser window to do the actual login and JWT generation
 func login(c *cli.Context) error {
-	raven.SetDSN(sentryDSN)
+	if err := raven.SetDSN(sentryDSN); err != nil {
+		return err
+	}
 	logger := log.CreateLogger()
 	args := c.Args()
 	rawURL := ensureURLScheme(args.First())
@@ -202,12 +207,15 @@ func login(c *cli.Context) error {
 		return err
 	}
 
-	token, err := token.GetTokenIfExists(appURL)
-	if err != nil || token == "" {
+	cfdToken, err := token.GetTokenIfExists(appURL)
+	if err != nil {
 		fmt.Fprintln(os.Stderr, "Unable to find token for provided application.")
 		return err
+	} else if cfdToken == "" {
+		fmt.Fprintln(os.Stderr, "token for provided application was empty.")
+		return errors.New("empty application token")
 	}
-	fmt.Fprintf(os.Stdout, "Successfully fetched your token:\n\n%s\n\n", string(token))
+	fmt.Fprintf(os.Stdout, "Successfully fetched your token:\n\n%s\n\n", cfdToken)
 
 	return nil
 }
@@ -224,7 +232,9 @@ func ensureURLScheme(url string) string {
 
 // curl provides a wrapper around curl, passing Access JWT along in request
 func curl(c *cli.Context) error {
-	raven.SetDSN(sentryDSN)
+	if err := raven.SetDSN(sentryDSN); err != nil {
+		return err
+	}
 	logger := log.CreateLogger()
 	args := c.Args()
 	if args.Len() < 1 {
@@ -258,7 +268,9 @@ func curl(c *cli.Context) error {
 
 // token dumps provided token to stdout
 func generateToken(c *cli.Context) error {
-	raven.SetDSN(sentryDSN)
+	if err := raven.SetDSN(sentryDSN); err != nil {
+		return err
+	}
 	appURL, err := url.Parse(c.String("app"))
 	if err != nil || c.NumFlags() < 1 {
 		fmt.Fprintln(os.Stderr, "Please provide a url.")
@@ -313,12 +325,12 @@ func sshGen(c *cli.Context) error {
 	// this fetchToken function mutates the appURL param. We should refactor that
 	fetchTokenURL := &url.URL{}
 	*fetchTokenURL = *originURL
-	token, err := token.FetchToken(fetchTokenURL)
+	cfdToken, err := token.FetchToken(fetchTokenURL)
 	if err != nil {
 		return err
 	}
 
-	if err := sshgen.GenerateShortLivedCertificate(originURL, token); err != nil {
+	if err := sshgen.GenerateShortLivedCertificate(originURL, cfdToken); err != nil {
 		return err
 	}
 

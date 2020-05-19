@@ -11,11 +11,13 @@ import (
 	"reflect"
 	"runtime"
 	"runtime/trace"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/cloudflare/cloudflared/awsuploader"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/buildinfo"
+	"github.com/cloudflare/cloudflared/cmd/cloudflared/cliutil"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/config"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/updater"
 	"github.com/cloudflare/cloudflared/connection"
@@ -38,6 +40,7 @@ import (
 	"github.com/getsentry/raven-go"
 	"github.com/gliderlabs/ssh"
 	"github.com/google/uuid"
+	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"gopkg.in/urfave/cli.v2"
 	"gopkg.in/urfave/cli.v2/altsrc"
@@ -98,7 +101,7 @@ func Commands() []*cli.Command {
 	cmds := []*cli.Command{
 		{
 			Name:      "login",
-			Action:    login,
+			Action:    cliutil.ErrorHandler(login),
 			Usage:     "Generate a configuration file with your login details",
 			ArgsUsage: " ",
 			Flags: []cli.Flag{
@@ -111,7 +114,7 @@ func Commands() []*cli.Command {
 		},
 		{
 			Name:   "proxy-dns",
-			Action: tunneldns.Run,
+			Action: cliutil.ErrorHandler(tunneldns.Run),
 			Usage:  "Run a DNS over HTTPS proxy server.",
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -160,7 +163,7 @@ func Commands() []*cli.Command {
 
 	cmds = append(cmds, &cli.Command{
 		Name:      "tunnel",
-		Action:    tunnel,
+		Action:    cliutil.ErrorHandler(tunnel),
 		Before:    Before,
 		Category:  "Tunnel",
 		Usage:     "Make a locally-running web service accessible over the internet using Argo Tunnel.",
@@ -421,7 +424,7 @@ func StartServer(c *cli.Context, version string, shutdownC, graceShutdownC chan 
 		return err
 	}
 
-	reconnectCh := make(chan struct{}, 1)
+	reconnectCh := make(chan origin.ReconnectSignal, 1)
 	if c.IsSet("stdin-control") {
 		logger.Warn("Enabling control through stdin")
 		go stdinControl(reconnectCh)
@@ -432,7 +435,6 @@ func StartServer(c *cli.Context, version string, shutdownC, graceShutdownC chan 
 		defer wg.Done()
 		errC <- origin.StartTunnelDaemon(ctx, tunnelConfig, connectedSignal, cloudflaredID, reconnectCh)
 	}()
-
 	return waitToShutdown(&wg, errC, shutdownC, graceShutdownC, c.Duration("grace-period"))
 }
 
@@ -606,9 +608,15 @@ func notifySystemd(waitForSignal *signal.Signal) {
 
 func writePidFile(waitForSignal *signal.Signal, pidFile string) {
 	<-waitForSignal.Wait()
-	file, err := os.Create(pidFile)
+	expandedPath, err := homedir.Expand(pidFile)
 	if err != nil {
-		logger.WithError(err).Errorf("Unable to write pid to %s", pidFile)
+		logger.WithError(err).Errorf("Unable to expand %s, try to use absolute path in --pidfile", pidFile)
+		return
+	}
+	file, err := os.Create(expandedPath)
+	if err != nil {
+		logger.WithError(err).Errorf("Unable to write pid to %s", expandedPath)
+		return
 	}
 	defer file.Close()
 	fmt.Fprintf(file, "%d", os.Getpid())
@@ -624,6 +632,8 @@ func hostnameFromURI(uri string) string {
 		return addPortIfMissing(u, 22)
 	case "rdp":
 		return addPortIfMissing(u, 3389)
+	case "smb":
+		return addPortIfMissing(u, 445)
 	case "tcp":
 		return addPortIfMissing(u, 7864) // just a random port since there isn't a default in this case
 	}
@@ -653,13 +663,13 @@ func dbConnectCmd() *cli.Command {
 	}
 
 	// Override action to setup the Proxy, then if successful, start the tunnel daemon.
-	cmd.Action = func(c *cli.Context) error {
+	cmd.Action = cliutil.ErrorHandler(func(c *cli.Context) error {
 		err := dbconnect.CmdAction(c)
 		if err == nil {
 			err = tunnel(c)
 		}
 		return err
-	}
+	})
 
 	return cmd
 }
@@ -1024,6 +1034,7 @@ func tunnelFlags(shouldHide bool) []cli.Flag {
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:    "use-quick-reconnects",
 			Usage:   "Test reestablishing connections with the new 'connection digest' flow.",
+			Value:   true,
 			EnvVars: []string{"TUNNEL_USE_QUICK_RECONNECTS"},
 			Hidden:  true,
 		}),
@@ -1112,17 +1123,34 @@ func tunnelFlags(shouldHide bool) []cli.Flag {
 	}
 }
 
-func stdinControl(reconnectCh chan struct{}) {
+func stdinControl(reconnectCh chan origin.ReconnectSignal) {
 	for {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			command := scanner.Text()
+			parts := strings.SplitN(command, " ", 2)
 
-			switch command {
+			switch parts[0] {
+			case "":
+				break
 			case "reconnect":
-				reconnectCh <- struct{}{}
+				var reconnect origin.ReconnectSignal
+				if len(parts) > 1 {
+					var err error
+					if reconnect.Delay, err = time.ParseDuration(parts[1]); err != nil {
+						logger.Error(err.Error())
+						continue
+					}
+				}
+				logger.Infof("Sending reconnect signal %+v", reconnect)
+				reconnectCh <- reconnect
 			default:
 				logger.Warn("Unknown command: ", command)
+				fallthrough
+			case "help":
+				logger.Info(`Supported command: 
+reconnect [delay] 
+- restarts one randomly chosen connection with optional delay before reconnect`)
 			}
 		}
 	}

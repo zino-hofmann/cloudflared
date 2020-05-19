@@ -6,10 +6,13 @@ import (
 	"time"
 
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/access"
+	"github.com/cloudflare/cloudflared/cmd/cloudflared/config"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/tunnel"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/updater"
 	"github.com/cloudflare/cloudflared/log"
 	"github.com/cloudflare/cloudflared/metrics"
+	"github.com/cloudflare/cloudflared/overwatch"
+	"github.com/cloudflare/cloudflared/watcher"
 
 	raven "github.com/getsentry/raven-go"
 	homedir "github.com/mitchellh/go-homedir"
@@ -121,7 +124,7 @@ func isEmptyInvocation(c *cli.Context) bool {
 func action(version string, shutdownC, graceShutdownC chan struct{}) cli.ActionFunc {
 	return func(c *cli.Context) (err error) {
 		if isEmptyInvocation(c) {
-			cli.ShowAppHelpAndExit(c, 1)
+			return handleServiceMode(shutdownC)
 		}
 		tags := make(map[string]string)
 		tags["hostname"] = c.String("hostname")
@@ -160,4 +163,30 @@ func handleError(err error) {
 		}
 	}
 	raven.CaptureError(err, nil)
+}
+
+// cloudflared was started without any flags
+func handleServiceMode(shutdownC chan struct{}) error {
+	// start the main run loop that reads from the config file
+	f, err := watcher.NewFile()
+	if err != nil {
+		logger.WithError(err).Error("Cannot load config file")
+		return err
+	}
+
+	configPath := config.FindDefaultConfigPath()
+	configManager, err := config.NewFileManager(f, configPath, logger)
+	if err != nil {
+		logger.WithError(err).Error("Cannot setup config file for monitoring")
+		return err
+	}
+
+	serviceManager := overwatch.NewAppManager(nil)
+
+	appService := NewAppService(configManager, serviceManager, shutdownC, logger)
+	if err := appService.Run(); err != nil {
+		logger.WithError(err).Error("Failed to start app service")
+		return err
+	}
+	return nil
 }
