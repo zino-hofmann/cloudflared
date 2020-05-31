@@ -7,22 +7,24 @@ import (
 
 	"github.com/cloudflare/cloudflared/carrier"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/config"
+	"github.com/cloudflare/cloudflared/h2mux"
+	"github.com/cloudflare/cloudflared/logger"
 	"github.com/cloudflare/cloudflared/validation"
 	"github.com/pkg/errors"
 	cli "gopkg.in/urfave/cli.v2"
 )
 
 // StartForwarder starts a client side websocket forward
-func StartForwarder(forwarder config.Forwarder, shutdown <-chan struct{}) error {
+func StartForwarder(forwarder config.Forwarder, shutdown <-chan struct{}, logger logger.Service) error {
 	validURLString, err := validation.ValidateUrl(forwarder.Listener)
 	if err != nil {
-		logger.WithError(err).Error("Error validating origin URL")
+		logger.Errorf("Error validating origin URL: %s", err)
 		return errors.Wrap(err, "error validating origin URL")
 	}
 
 	validURL, err := url.Parse(validURLString)
 	if err != nil {
-		logger.WithError(err).Error("Error parsing origin URL")
+		logger.Errorf("Error parsing origin URL: %s", err)
 		return errors.Wrap(err, "error parsing origin URL")
 	}
 
@@ -43,6 +45,12 @@ func StartForwarder(forwarder config.Forwarder, shutdown <-chan struct{}) error 
 // useful for proxying other protocols (like ssh) over websockets
 // (which you can put Access in front of)
 func ssh(c *cli.Context) error {
+	logDirectory, logLevel := config.FindLogSettings()
+	logger, err := logger.New(logger.DefaultFile(logDirectory), logger.LogLevelString(logLevel))
+	if err != nil {
+		return errors.Wrap(err, "error setting up logger")
+	}
+
 	// get the hostname from the cmdline and error out if its not provided
 	rawHostName := c.String(sshHostnameFlag)
 	hostname, err := validation.ValidateHostname(rawHostName)
@@ -54,15 +62,15 @@ func ssh(c *cli.Context) error {
 	// get the headers from the cmdline and add them
 	headers := buildRequestHeaders(c.StringSlice(sshHeaderFlag))
 	if c.IsSet(sshTokenIDFlag) {
-		headers.Add("CF-Access-Client-Id", c.String(sshTokenIDFlag))
+		headers.Add(h2mux.CFAccessClientIDHeader, c.String(sshTokenIDFlag))
 	}
 	if c.IsSet(sshTokenSecretFlag) {
-		headers.Add("CF-Access-Client-Secret", c.String(sshTokenSecretFlag))
+		headers.Add(h2mux.CFAccessClientSecretHeader, c.String(sshTokenSecretFlag))
 	}
 
 	destination := c.String(sshDestinationFlag)
 	if destination != "" {
-		headers.Add("CF-Access-SSH-Destination", destination)
+		headers.Add(h2mux.CFJumpDestinationHeader, destination)
 	}
 
 	options := &carrier.StartOptions{
@@ -76,17 +84,21 @@ func ssh(c *cli.Context) error {
 	if c.NArg() > 0 || c.IsSet(sshURLFlag) {
 		localForwarder, err := config.ValidateUrl(c)
 		if err != nil {
-			logger.WithError(err).Error("Error validating origin URL")
+			logger.Errorf("Error validating origin URL: %s", err)
 			return errors.Wrap(err, "error validating origin URL")
 		}
 		forwarder, err := url.Parse(localForwarder)
 		if err != nil {
-			logger.WithError(err).Error("Error validating origin URL")
+			logger.Errorf("Error validating origin URL: %s", err)
 			return errors.Wrap(err, "error validating origin URL")
 		}
 
 		logger.Infof("Start Websocket listener on: %s", forwarder.Host)
-		return carrier.StartForwarder(wsConn, forwarder.Host, shutdownC, options)
+		err = carrier.StartForwarder(wsConn, forwarder.Host, shutdownC, options)
+		if err != nil {
+			logger.Errorf("Error on Websocket listener: %s", err)
+		}
+		return err
 	}
 
 	return carrier.StartClient(wsConn, &carrier.StdinoutStream{}, options)

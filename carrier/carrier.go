@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/token"
+	"github.com/cloudflare/cloudflared/h2mux"
+	"github.com/cloudflare/cloudflared/logger"
 	"github.com/pkg/errors"
 )
 
@@ -128,13 +130,13 @@ func IsAccessResponse(resp *http.Response) bool {
 }
 
 // BuildAccessRequest builds an HTTP request with the Access token set
-func BuildAccessRequest(options *StartOptions) (*http.Request, error) {
+func BuildAccessRequest(options *StartOptions, logger logger.Service) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, options.OriginURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := token.FetchToken(req.URL)
+	token, err := token.FetchToken(req.URL, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +147,7 @@ func BuildAccessRequest(options *StartOptions) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	originRequest.Header.Set("cf-access-token", token)
+	originRequest.Header.Set(h2mux.CFAccessTokenHeader, token)
 
 	for k, v := range options.Headers {
 		if len(v) >= 1 {
