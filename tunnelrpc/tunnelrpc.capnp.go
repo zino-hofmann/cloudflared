@@ -4,6 +4,7 @@ package tunnelrpc
 
 import (
 	context "golang.org/x/net/context"
+	strconv "strconv"
 	capnp "zombiezen.com/go/capnproto2"
 	text "zombiezen.com/go/capnproto2/encoding/text"
 	schemas "zombiezen.com/go/capnproto2/schemas"
@@ -900,6 +901,1111 @@ func (p AuthenticateResponse_Promise) Struct() (AuthenticateResponse, error) {
 	return AuthenticateResponse{s}, err
 }
 
+type ClientInfo struct{ capnp.Struct }
+
+// ClientInfo_TypeID is the unique identifier for the type ClientInfo.
+const ClientInfo_TypeID = 0x83ced0145b2f114b
+
+func NewClientInfo(s *capnp.Segment) (ClientInfo, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 4})
+	return ClientInfo{st}, err
+}
+
+func NewRootClientInfo(s *capnp.Segment) (ClientInfo, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 4})
+	return ClientInfo{st}, err
+}
+
+func ReadRootClientInfo(msg *capnp.Message) (ClientInfo, error) {
+	root, err := msg.RootPtr()
+	return ClientInfo{root.Struct()}, err
+}
+
+func (s ClientInfo) String() string {
+	str, _ := text.Marshal(0x83ced0145b2f114b, s.Struct)
+	return str
+}
+
+func (s ClientInfo) ClientId() ([]byte, error) {
+	p, err := s.Struct.Ptr(0)
+	return []byte(p.Data()), err
+}
+
+func (s ClientInfo) HasClientId() bool {
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s ClientInfo) SetClientId(v []byte) error {
+	return s.Struct.SetData(0, v)
+}
+
+func (s ClientInfo) Features() (capnp.TextList, error) {
+	p, err := s.Struct.Ptr(1)
+	return capnp.TextList{List: p.List()}, err
+}
+
+func (s ClientInfo) HasFeatures() bool {
+	p, err := s.Struct.Ptr(1)
+	return p.IsValid() || err != nil
+}
+
+func (s ClientInfo) SetFeatures(v capnp.TextList) error {
+	return s.Struct.SetPtr(1, v.List.ToPtr())
+}
+
+// NewFeatures sets the features field to a newly
+// allocated capnp.TextList, preferring placement in s's segment.
+func (s ClientInfo) NewFeatures(n int32) (capnp.TextList, error) {
+	l, err := capnp.NewTextList(s.Struct.Segment(), n)
+	if err != nil {
+		return capnp.TextList{}, err
+	}
+	err = s.Struct.SetPtr(1, l.List.ToPtr())
+	return l, err
+}
+
+func (s ClientInfo) Version() (string, error) {
+	p, err := s.Struct.Ptr(2)
+	return p.Text(), err
+}
+
+func (s ClientInfo) HasVersion() bool {
+	p, err := s.Struct.Ptr(2)
+	return p.IsValid() || err != nil
+}
+
+func (s ClientInfo) VersionBytes() ([]byte, error) {
+	p, err := s.Struct.Ptr(2)
+	return p.TextBytes(), err
+}
+
+func (s ClientInfo) SetVersion(v string) error {
+	return s.Struct.SetText(2, v)
+}
+
+func (s ClientInfo) Arch() (string, error) {
+	p, err := s.Struct.Ptr(3)
+	return p.Text(), err
+}
+
+func (s ClientInfo) HasArch() bool {
+	p, err := s.Struct.Ptr(3)
+	return p.IsValid() || err != nil
+}
+
+func (s ClientInfo) ArchBytes() ([]byte, error) {
+	p, err := s.Struct.Ptr(3)
+	return p.TextBytes(), err
+}
+
+func (s ClientInfo) SetArch(v string) error {
+	return s.Struct.SetText(3, v)
+}
+
+// ClientInfo_List is a list of ClientInfo.
+type ClientInfo_List struct{ capnp.List }
+
+// NewClientInfo creates a new list of ClientInfo.
+func NewClientInfo_List(s *capnp.Segment, sz int32) (ClientInfo_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 4}, sz)
+	return ClientInfo_List{l}, err
+}
+
+func (s ClientInfo_List) At(i int) ClientInfo { return ClientInfo{s.List.Struct(i)} }
+
+func (s ClientInfo_List) Set(i int, v ClientInfo) error { return s.List.SetStruct(i, v.Struct) }
+
+func (s ClientInfo_List) String() string {
+	str, _ := text.MarshalList(0x83ced0145b2f114b, s.List)
+	return str
+}
+
+// ClientInfo_Promise is a wrapper for a ClientInfo promised by a client call.
+type ClientInfo_Promise struct{ *capnp.Pipeline }
+
+func (p ClientInfo_Promise) Struct() (ClientInfo, error) {
+	s, err := p.Pipeline.Struct()
+	return ClientInfo{s}, err
+}
+
+type ConnectionOptions struct{ capnp.Struct }
+
+// ConnectionOptions_TypeID is the unique identifier for the type ConnectionOptions.
+const ConnectionOptions_TypeID = 0xb4bf9861fe035d04
+
+func NewConnectionOptions(s *capnp.Segment) (ConnectionOptions, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
+	return ConnectionOptions{st}, err
+}
+
+func NewRootConnectionOptions(s *capnp.Segment) (ConnectionOptions, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
+	return ConnectionOptions{st}, err
+}
+
+func ReadRootConnectionOptions(msg *capnp.Message) (ConnectionOptions, error) {
+	root, err := msg.RootPtr()
+	return ConnectionOptions{root.Struct()}, err
+}
+
+func (s ConnectionOptions) String() string {
+	str, _ := text.Marshal(0xb4bf9861fe035d04, s.Struct)
+	return str
+}
+
+func (s ConnectionOptions) Client() (ClientInfo, error) {
+	p, err := s.Struct.Ptr(0)
+	return ClientInfo{Struct: p.Struct()}, err
+}
+
+func (s ConnectionOptions) HasClient() bool {
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s ConnectionOptions) SetClient(v ClientInfo) error {
+	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+}
+
+// NewClient sets the client field to a newly
+// allocated ClientInfo struct, preferring placement in s's segment.
+func (s ConnectionOptions) NewClient() (ClientInfo, error) {
+	ss, err := NewClientInfo(s.Struct.Segment())
+	if err != nil {
+		return ClientInfo{}, err
+	}
+	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	return ss, err
+}
+
+func (s ConnectionOptions) OriginLocalIp() ([]byte, error) {
+	p, err := s.Struct.Ptr(1)
+	return []byte(p.Data()), err
+}
+
+func (s ConnectionOptions) HasOriginLocalIp() bool {
+	p, err := s.Struct.Ptr(1)
+	return p.IsValid() || err != nil
+}
+
+func (s ConnectionOptions) SetOriginLocalIp(v []byte) error {
+	return s.Struct.SetData(1, v)
+}
+
+func (s ConnectionOptions) ReplaceExisting() bool {
+	return s.Struct.Bit(0)
+}
+
+func (s ConnectionOptions) SetReplaceExisting(v bool) {
+	s.Struct.SetBit(0, v)
+}
+
+func (s ConnectionOptions) CompressionQuality() uint8 {
+	return s.Struct.Uint8(1)
+}
+
+func (s ConnectionOptions) SetCompressionQuality(v uint8) {
+	s.Struct.SetUint8(1, v)
+}
+
+// ConnectionOptions_List is a list of ConnectionOptions.
+type ConnectionOptions_List struct{ capnp.List }
+
+// NewConnectionOptions creates a new list of ConnectionOptions.
+func NewConnectionOptions_List(s *capnp.Segment, sz int32) (ConnectionOptions_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2}, sz)
+	return ConnectionOptions_List{l}, err
+}
+
+func (s ConnectionOptions_List) At(i int) ConnectionOptions {
+	return ConnectionOptions{s.List.Struct(i)}
+}
+
+func (s ConnectionOptions_List) Set(i int, v ConnectionOptions) error {
+	return s.List.SetStruct(i, v.Struct)
+}
+
+func (s ConnectionOptions_List) String() string {
+	str, _ := text.MarshalList(0xb4bf9861fe035d04, s.List)
+	return str
+}
+
+// ConnectionOptions_Promise is a wrapper for a ConnectionOptions promised by a client call.
+type ConnectionOptions_Promise struct{ *capnp.Pipeline }
+
+func (p ConnectionOptions_Promise) Struct() (ConnectionOptions, error) {
+	s, err := p.Pipeline.Struct()
+	return ConnectionOptions{s}, err
+}
+
+func (p ConnectionOptions_Promise) Client() ClientInfo_Promise {
+	return ClientInfo_Promise{Pipeline: p.Pipeline.GetPipeline(0)}
+}
+
+type ConnectionResponse struct{ capnp.Struct }
+type ConnectionResponse_result ConnectionResponse
+type ConnectionResponse_result_Which uint16
+
+const (
+	ConnectionResponse_result_Which_error             ConnectionResponse_result_Which = 0
+	ConnectionResponse_result_Which_connectionDetails ConnectionResponse_result_Which = 1
+)
+
+func (w ConnectionResponse_result_Which) String() string {
+	const s = "errorconnectionDetails"
+	switch w {
+	case ConnectionResponse_result_Which_error:
+		return s[0:5]
+	case ConnectionResponse_result_Which_connectionDetails:
+		return s[5:22]
+
+	}
+	return "ConnectionResponse_result_Which(" + strconv.FormatUint(uint64(w), 10) + ")"
+}
+
+// ConnectionResponse_TypeID is the unique identifier for the type ConnectionResponse.
+const ConnectionResponse_TypeID = 0xdbaa9d03d52b62dc
+
+func NewConnectionResponse(s *capnp.Segment) (ConnectionResponse, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	return ConnectionResponse{st}, err
+}
+
+func NewRootConnectionResponse(s *capnp.Segment) (ConnectionResponse, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	return ConnectionResponse{st}, err
+}
+
+func ReadRootConnectionResponse(msg *capnp.Message) (ConnectionResponse, error) {
+	root, err := msg.RootPtr()
+	return ConnectionResponse{root.Struct()}, err
+}
+
+func (s ConnectionResponse) String() string {
+	str, _ := text.Marshal(0xdbaa9d03d52b62dc, s.Struct)
+	return str
+}
+
+func (s ConnectionResponse) Result() ConnectionResponse_result { return ConnectionResponse_result(s) }
+
+func (s ConnectionResponse_result) Which() ConnectionResponse_result_Which {
+	return ConnectionResponse_result_Which(s.Struct.Uint16(0))
+}
+func (s ConnectionResponse_result) Error() (ConnectionError, error) {
+	if s.Struct.Uint16(0) != 0 {
+		panic("Which() != error")
+	}
+	p, err := s.Struct.Ptr(0)
+	return ConnectionError{Struct: p.Struct()}, err
+}
+
+func (s ConnectionResponse_result) HasError() bool {
+	if s.Struct.Uint16(0) != 0 {
+		return false
+	}
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s ConnectionResponse_result) SetError(v ConnectionError) error {
+	s.Struct.SetUint16(0, 0)
+	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+}
+
+// NewError sets the error field to a newly
+// allocated ConnectionError struct, preferring placement in s's segment.
+func (s ConnectionResponse_result) NewError() (ConnectionError, error) {
+	s.Struct.SetUint16(0, 0)
+	ss, err := NewConnectionError(s.Struct.Segment())
+	if err != nil {
+		return ConnectionError{}, err
+	}
+	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	return ss, err
+}
+
+func (s ConnectionResponse_result) ConnectionDetails() (ConnectionDetails, error) {
+	if s.Struct.Uint16(0) != 1 {
+		panic("Which() != connectionDetails")
+	}
+	p, err := s.Struct.Ptr(0)
+	return ConnectionDetails{Struct: p.Struct()}, err
+}
+
+func (s ConnectionResponse_result) HasConnectionDetails() bool {
+	if s.Struct.Uint16(0) != 1 {
+		return false
+	}
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s ConnectionResponse_result) SetConnectionDetails(v ConnectionDetails) error {
+	s.Struct.SetUint16(0, 1)
+	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+}
+
+// NewConnectionDetails sets the connectionDetails field to a newly
+// allocated ConnectionDetails struct, preferring placement in s's segment.
+func (s ConnectionResponse_result) NewConnectionDetails() (ConnectionDetails, error) {
+	s.Struct.SetUint16(0, 1)
+	ss, err := NewConnectionDetails(s.Struct.Segment())
+	if err != nil {
+		return ConnectionDetails{}, err
+	}
+	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	return ss, err
+}
+
+// ConnectionResponse_List is a list of ConnectionResponse.
+type ConnectionResponse_List struct{ capnp.List }
+
+// NewConnectionResponse creates a new list of ConnectionResponse.
+func NewConnectionResponse_List(s *capnp.Segment, sz int32) (ConnectionResponse_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
+	return ConnectionResponse_List{l}, err
+}
+
+func (s ConnectionResponse_List) At(i int) ConnectionResponse {
+	return ConnectionResponse{s.List.Struct(i)}
+}
+
+func (s ConnectionResponse_List) Set(i int, v ConnectionResponse) error {
+	return s.List.SetStruct(i, v.Struct)
+}
+
+func (s ConnectionResponse_List) String() string {
+	str, _ := text.MarshalList(0xdbaa9d03d52b62dc, s.List)
+	return str
+}
+
+// ConnectionResponse_Promise is a wrapper for a ConnectionResponse promised by a client call.
+type ConnectionResponse_Promise struct{ *capnp.Pipeline }
+
+func (p ConnectionResponse_Promise) Struct() (ConnectionResponse, error) {
+	s, err := p.Pipeline.Struct()
+	return ConnectionResponse{s}, err
+}
+
+func (p ConnectionResponse_Promise) Result() ConnectionResponse_result_Promise {
+	return ConnectionResponse_result_Promise{p.Pipeline}
+}
+
+// ConnectionResponse_result_Promise is a wrapper for a ConnectionResponse_result promised by a client call.
+type ConnectionResponse_result_Promise struct{ *capnp.Pipeline }
+
+func (p ConnectionResponse_result_Promise) Struct() (ConnectionResponse_result, error) {
+	s, err := p.Pipeline.Struct()
+	return ConnectionResponse_result{s}, err
+}
+
+func (p ConnectionResponse_result_Promise) Error() ConnectionError_Promise {
+	return ConnectionError_Promise{Pipeline: p.Pipeline.GetPipeline(0)}
+}
+
+func (p ConnectionResponse_result_Promise) ConnectionDetails() ConnectionDetails_Promise {
+	return ConnectionDetails_Promise{Pipeline: p.Pipeline.GetPipeline(0)}
+}
+
+type ConnectionError struct{ capnp.Struct }
+
+// ConnectionError_TypeID is the unique identifier for the type ConnectionError.
+const ConnectionError_TypeID = 0xf5f383d2785edb86
+
+func NewConnectionError(s *capnp.Segment) (ConnectionError, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 1})
+	return ConnectionError{st}, err
+}
+
+func NewRootConnectionError(s *capnp.Segment) (ConnectionError, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 1})
+	return ConnectionError{st}, err
+}
+
+func ReadRootConnectionError(msg *capnp.Message) (ConnectionError, error) {
+	root, err := msg.RootPtr()
+	return ConnectionError{root.Struct()}, err
+}
+
+func (s ConnectionError) String() string {
+	str, _ := text.Marshal(0xf5f383d2785edb86, s.Struct)
+	return str
+}
+
+func (s ConnectionError) Cause() (string, error) {
+	p, err := s.Struct.Ptr(0)
+	return p.Text(), err
+}
+
+func (s ConnectionError) HasCause() bool {
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s ConnectionError) CauseBytes() ([]byte, error) {
+	p, err := s.Struct.Ptr(0)
+	return p.TextBytes(), err
+}
+
+func (s ConnectionError) SetCause(v string) error {
+	return s.Struct.SetText(0, v)
+}
+
+func (s ConnectionError) RetryAfter() int64 {
+	return int64(s.Struct.Uint64(0))
+}
+
+func (s ConnectionError) SetRetryAfter(v int64) {
+	s.Struct.SetUint64(0, uint64(v))
+}
+
+func (s ConnectionError) ShouldRetry() bool {
+	return s.Struct.Bit(64)
+}
+
+func (s ConnectionError) SetShouldRetry(v bool) {
+	s.Struct.SetBit(64, v)
+}
+
+// ConnectionError_List is a list of ConnectionError.
+type ConnectionError_List struct{ capnp.List }
+
+// NewConnectionError creates a new list of ConnectionError.
+func NewConnectionError_List(s *capnp.Segment, sz int32) (ConnectionError_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 16, PointerCount: 1}, sz)
+	return ConnectionError_List{l}, err
+}
+
+func (s ConnectionError_List) At(i int) ConnectionError { return ConnectionError{s.List.Struct(i)} }
+
+func (s ConnectionError_List) Set(i int, v ConnectionError) error {
+	return s.List.SetStruct(i, v.Struct)
+}
+
+func (s ConnectionError_List) String() string {
+	str, _ := text.MarshalList(0xf5f383d2785edb86, s.List)
+	return str
+}
+
+// ConnectionError_Promise is a wrapper for a ConnectionError promised by a client call.
+type ConnectionError_Promise struct{ *capnp.Pipeline }
+
+func (p ConnectionError_Promise) Struct() (ConnectionError, error) {
+	s, err := p.Pipeline.Struct()
+	return ConnectionError{s}, err
+}
+
+type ConnectionDetails struct{ capnp.Struct }
+
+// ConnectionDetails_TypeID is the unique identifier for the type ConnectionDetails.
+const ConnectionDetails_TypeID = 0xb5f39f082b9ac18a
+
+func NewConnectionDetails(s *capnp.Segment) (ConnectionDetails, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
+	return ConnectionDetails{st}, err
+}
+
+func NewRootConnectionDetails(s *capnp.Segment) (ConnectionDetails, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
+	return ConnectionDetails{st}, err
+}
+
+func ReadRootConnectionDetails(msg *capnp.Message) (ConnectionDetails, error) {
+	root, err := msg.RootPtr()
+	return ConnectionDetails{root.Struct()}, err
+}
+
+func (s ConnectionDetails) String() string {
+	str, _ := text.Marshal(0xb5f39f082b9ac18a, s.Struct)
+	return str
+}
+
+func (s ConnectionDetails) Uuid() ([]byte, error) {
+	p, err := s.Struct.Ptr(0)
+	return []byte(p.Data()), err
+}
+
+func (s ConnectionDetails) HasUuid() bool {
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s ConnectionDetails) SetUuid(v []byte) error {
+	return s.Struct.SetData(0, v)
+}
+
+func (s ConnectionDetails) LocationName() (string, error) {
+	p, err := s.Struct.Ptr(1)
+	return p.Text(), err
+}
+
+func (s ConnectionDetails) HasLocationName() bool {
+	p, err := s.Struct.Ptr(1)
+	return p.IsValid() || err != nil
+}
+
+func (s ConnectionDetails) LocationNameBytes() ([]byte, error) {
+	p, err := s.Struct.Ptr(1)
+	return p.TextBytes(), err
+}
+
+func (s ConnectionDetails) SetLocationName(v string) error {
+	return s.Struct.SetText(1, v)
+}
+
+// ConnectionDetails_List is a list of ConnectionDetails.
+type ConnectionDetails_List struct{ capnp.List }
+
+// NewConnectionDetails creates a new list of ConnectionDetails.
+func NewConnectionDetails_List(s *capnp.Segment, sz int32) (ConnectionDetails_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
+	return ConnectionDetails_List{l}, err
+}
+
+func (s ConnectionDetails_List) At(i int) ConnectionDetails {
+	return ConnectionDetails{s.List.Struct(i)}
+}
+
+func (s ConnectionDetails_List) Set(i int, v ConnectionDetails) error {
+	return s.List.SetStruct(i, v.Struct)
+}
+
+func (s ConnectionDetails_List) String() string {
+	str, _ := text.MarshalList(0xb5f39f082b9ac18a, s.List)
+	return str
+}
+
+// ConnectionDetails_Promise is a wrapper for a ConnectionDetails promised by a client call.
+type ConnectionDetails_Promise struct{ *capnp.Pipeline }
+
+func (p ConnectionDetails_Promise) Struct() (ConnectionDetails, error) {
+	s, err := p.Pipeline.Struct()
+	return ConnectionDetails{s}, err
+}
+
+type TunnelAuth struct{ capnp.Struct }
+
+// TunnelAuth_TypeID is the unique identifier for the type TunnelAuth.
+const TunnelAuth_TypeID = 0x9496331ab9cd463f
+
+func NewTunnelAuth(s *capnp.Segment) (TunnelAuth, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
+	return TunnelAuth{st}, err
+}
+
+func NewRootTunnelAuth(s *capnp.Segment) (TunnelAuth, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2})
+	return TunnelAuth{st}, err
+}
+
+func ReadRootTunnelAuth(msg *capnp.Message) (TunnelAuth, error) {
+	root, err := msg.RootPtr()
+	return TunnelAuth{root.Struct()}, err
+}
+
+func (s TunnelAuth) String() string {
+	str, _ := text.Marshal(0x9496331ab9cd463f, s.Struct)
+	return str
+}
+
+func (s TunnelAuth) AccountTag() (string, error) {
+	p, err := s.Struct.Ptr(0)
+	return p.Text(), err
+}
+
+func (s TunnelAuth) HasAccountTag() bool {
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s TunnelAuth) AccountTagBytes() ([]byte, error) {
+	p, err := s.Struct.Ptr(0)
+	return p.TextBytes(), err
+}
+
+func (s TunnelAuth) SetAccountTag(v string) error {
+	return s.Struct.SetText(0, v)
+}
+
+func (s TunnelAuth) TunnelSecret() ([]byte, error) {
+	p, err := s.Struct.Ptr(1)
+	return []byte(p.Data()), err
+}
+
+func (s TunnelAuth) HasTunnelSecret() bool {
+	p, err := s.Struct.Ptr(1)
+	return p.IsValid() || err != nil
+}
+
+func (s TunnelAuth) SetTunnelSecret(v []byte) error {
+	return s.Struct.SetData(1, v)
+}
+
+// TunnelAuth_List is a list of TunnelAuth.
+type TunnelAuth_List struct{ capnp.List }
+
+// NewTunnelAuth creates a new list of TunnelAuth.
+func NewTunnelAuth_List(s *capnp.Segment, sz int32) (TunnelAuth_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 2}, sz)
+	return TunnelAuth_List{l}, err
+}
+
+func (s TunnelAuth_List) At(i int) TunnelAuth { return TunnelAuth{s.List.Struct(i)} }
+
+func (s TunnelAuth_List) Set(i int, v TunnelAuth) error { return s.List.SetStruct(i, v.Struct) }
+
+func (s TunnelAuth_List) String() string {
+	str, _ := text.MarshalList(0x9496331ab9cd463f, s.List)
+	return str
+}
+
+// TunnelAuth_Promise is a wrapper for a TunnelAuth promised by a client call.
+type TunnelAuth_Promise struct{ *capnp.Pipeline }
+
+func (p TunnelAuth_Promise) Struct() (TunnelAuth, error) {
+	s, err := p.Pipeline.Struct()
+	return TunnelAuth{s}, err
+}
+
+type RegistrationServer struct{ Client capnp.Client }
+
+// RegistrationServer_TypeID is the unique identifier for the type RegistrationServer.
+const RegistrationServer_TypeID = 0xf71695ec7fe85497
+
+func (c RegistrationServer) RegisterConnection(ctx context.Context, params func(RegistrationServer_registerConnection_Params) error, opts ...capnp.CallOption) RegistrationServer_registerConnection_Results_Promise {
+	if c.Client == nil {
+		return RegistrationServer_registerConnection_Results_Promise{Pipeline: capnp.NewPipeline(capnp.ErrorAnswer(capnp.ErrNullClient))}
+	}
+	call := &capnp.Call{
+		Ctx: ctx,
+		Method: capnp.Method{
+			InterfaceID:   0xf71695ec7fe85497,
+			MethodID:      0,
+			InterfaceName: "tunnelrpc/tunnelrpc.capnp:RegistrationServer",
+			MethodName:    "registerConnection",
+		},
+		Options: capnp.NewCallOptions(opts),
+	}
+	if params != nil {
+		call.ParamsSize = capnp.ObjectSize{DataSize: 8, PointerCount: 3}
+		call.ParamsFunc = func(s capnp.Struct) error { return params(RegistrationServer_registerConnection_Params{Struct: s}) }
+	}
+	return RegistrationServer_registerConnection_Results_Promise{Pipeline: capnp.NewPipeline(c.Client.Call(call))}
+}
+func (c RegistrationServer) UnregisterConnection(ctx context.Context, params func(RegistrationServer_unregisterConnection_Params) error, opts ...capnp.CallOption) RegistrationServer_unregisterConnection_Results_Promise {
+	if c.Client == nil {
+		return RegistrationServer_unregisterConnection_Results_Promise{Pipeline: capnp.NewPipeline(capnp.ErrorAnswer(capnp.ErrNullClient))}
+	}
+	call := &capnp.Call{
+		Ctx: ctx,
+		Method: capnp.Method{
+			InterfaceID:   0xf71695ec7fe85497,
+			MethodID:      1,
+			InterfaceName: "tunnelrpc/tunnelrpc.capnp:RegistrationServer",
+			MethodName:    "unregisterConnection",
+		},
+		Options: capnp.NewCallOptions(opts),
+	}
+	if params != nil {
+		call.ParamsSize = capnp.ObjectSize{DataSize: 0, PointerCount: 0}
+		call.ParamsFunc = func(s capnp.Struct) error { return params(RegistrationServer_unregisterConnection_Params{Struct: s}) }
+	}
+	return RegistrationServer_unregisterConnection_Results_Promise{Pipeline: capnp.NewPipeline(c.Client.Call(call))}
+}
+
+type RegistrationServer_Server interface {
+	RegisterConnection(RegistrationServer_registerConnection) error
+
+	UnregisterConnection(RegistrationServer_unregisterConnection) error
+}
+
+func RegistrationServer_ServerToClient(s RegistrationServer_Server) RegistrationServer {
+	c, _ := s.(server.Closer)
+	return RegistrationServer{Client: server.New(RegistrationServer_Methods(nil, s), c)}
+}
+
+func RegistrationServer_Methods(methods []server.Method, s RegistrationServer_Server) []server.Method {
+	if cap(methods) == 0 {
+		methods = make([]server.Method, 0, 2)
+	}
+
+	methods = append(methods, server.Method{
+		Method: capnp.Method{
+			InterfaceID:   0xf71695ec7fe85497,
+			MethodID:      0,
+			InterfaceName: "tunnelrpc/tunnelrpc.capnp:RegistrationServer",
+			MethodName:    "registerConnection",
+		},
+		Impl: func(c context.Context, opts capnp.CallOptions, p, r capnp.Struct) error {
+			call := RegistrationServer_registerConnection{c, opts, RegistrationServer_registerConnection_Params{Struct: p}, RegistrationServer_registerConnection_Results{Struct: r}}
+			return s.RegisterConnection(call)
+		},
+		ResultsSize: capnp.ObjectSize{DataSize: 0, PointerCount: 1},
+	})
+
+	methods = append(methods, server.Method{
+		Method: capnp.Method{
+			InterfaceID:   0xf71695ec7fe85497,
+			MethodID:      1,
+			InterfaceName: "tunnelrpc/tunnelrpc.capnp:RegistrationServer",
+			MethodName:    "unregisterConnection",
+		},
+		Impl: func(c context.Context, opts capnp.CallOptions, p, r capnp.Struct) error {
+			call := RegistrationServer_unregisterConnection{c, opts, RegistrationServer_unregisterConnection_Params{Struct: p}, RegistrationServer_unregisterConnection_Results{Struct: r}}
+			return s.UnregisterConnection(call)
+		},
+		ResultsSize: capnp.ObjectSize{DataSize: 0, PointerCount: 0},
+	})
+
+	return methods
+}
+
+// RegistrationServer_registerConnection holds the arguments for a server call to RegistrationServer.registerConnection.
+type RegistrationServer_registerConnection struct {
+	Ctx     context.Context
+	Options capnp.CallOptions
+	Params  RegistrationServer_registerConnection_Params
+	Results RegistrationServer_registerConnection_Results
+}
+
+// RegistrationServer_unregisterConnection holds the arguments for a server call to RegistrationServer.unregisterConnection.
+type RegistrationServer_unregisterConnection struct {
+	Ctx     context.Context
+	Options capnp.CallOptions
+	Params  RegistrationServer_unregisterConnection_Params
+	Results RegistrationServer_unregisterConnection_Results
+}
+
+type RegistrationServer_registerConnection_Params struct{ capnp.Struct }
+
+// RegistrationServer_registerConnection_Params_TypeID is the unique identifier for the type RegistrationServer_registerConnection_Params.
+const RegistrationServer_registerConnection_Params_TypeID = 0xe6646dec8feaa6ee
+
+func NewRegistrationServer_registerConnection_Params(s *capnp.Segment) (RegistrationServer_registerConnection_Params, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 3})
+	return RegistrationServer_registerConnection_Params{st}, err
+}
+
+func NewRootRegistrationServer_registerConnection_Params(s *capnp.Segment) (RegistrationServer_registerConnection_Params, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 3})
+	return RegistrationServer_registerConnection_Params{st}, err
+}
+
+func ReadRootRegistrationServer_registerConnection_Params(msg *capnp.Message) (RegistrationServer_registerConnection_Params, error) {
+	root, err := msg.RootPtr()
+	return RegistrationServer_registerConnection_Params{root.Struct()}, err
+}
+
+func (s RegistrationServer_registerConnection_Params) String() string {
+	str, _ := text.Marshal(0xe6646dec8feaa6ee, s.Struct)
+	return str
+}
+
+func (s RegistrationServer_registerConnection_Params) Auth() (TunnelAuth, error) {
+	p, err := s.Struct.Ptr(0)
+	return TunnelAuth{Struct: p.Struct()}, err
+}
+
+func (s RegistrationServer_registerConnection_Params) HasAuth() bool {
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s RegistrationServer_registerConnection_Params) SetAuth(v TunnelAuth) error {
+	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+}
+
+// NewAuth sets the auth field to a newly
+// allocated TunnelAuth struct, preferring placement in s's segment.
+func (s RegistrationServer_registerConnection_Params) NewAuth() (TunnelAuth, error) {
+	ss, err := NewTunnelAuth(s.Struct.Segment())
+	if err != nil {
+		return TunnelAuth{}, err
+	}
+	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	return ss, err
+}
+
+func (s RegistrationServer_registerConnection_Params) TunnelId() ([]byte, error) {
+	p, err := s.Struct.Ptr(1)
+	return []byte(p.Data()), err
+}
+
+func (s RegistrationServer_registerConnection_Params) HasTunnelId() bool {
+	p, err := s.Struct.Ptr(1)
+	return p.IsValid() || err != nil
+}
+
+func (s RegistrationServer_registerConnection_Params) SetTunnelId(v []byte) error {
+	return s.Struct.SetData(1, v)
+}
+
+func (s RegistrationServer_registerConnection_Params) ConnIndex() uint8 {
+	return s.Struct.Uint8(0)
+}
+
+func (s RegistrationServer_registerConnection_Params) SetConnIndex(v uint8) {
+	s.Struct.SetUint8(0, v)
+}
+
+func (s RegistrationServer_registerConnection_Params) Options() (ConnectionOptions, error) {
+	p, err := s.Struct.Ptr(2)
+	return ConnectionOptions{Struct: p.Struct()}, err
+}
+
+func (s RegistrationServer_registerConnection_Params) HasOptions() bool {
+	p, err := s.Struct.Ptr(2)
+	return p.IsValid() || err != nil
+}
+
+func (s RegistrationServer_registerConnection_Params) SetOptions(v ConnectionOptions) error {
+	return s.Struct.SetPtr(2, v.Struct.ToPtr())
+}
+
+// NewOptions sets the options field to a newly
+// allocated ConnectionOptions struct, preferring placement in s's segment.
+func (s RegistrationServer_registerConnection_Params) NewOptions() (ConnectionOptions, error) {
+	ss, err := NewConnectionOptions(s.Struct.Segment())
+	if err != nil {
+		return ConnectionOptions{}, err
+	}
+	err = s.Struct.SetPtr(2, ss.Struct.ToPtr())
+	return ss, err
+}
+
+// RegistrationServer_registerConnection_Params_List is a list of RegistrationServer_registerConnection_Params.
+type RegistrationServer_registerConnection_Params_List struct{ capnp.List }
+
+// NewRegistrationServer_registerConnection_Params creates a new list of RegistrationServer_registerConnection_Params.
+func NewRegistrationServer_registerConnection_Params_List(s *capnp.Segment, sz int32) (RegistrationServer_registerConnection_Params_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 3}, sz)
+	return RegistrationServer_registerConnection_Params_List{l}, err
+}
+
+func (s RegistrationServer_registerConnection_Params_List) At(i int) RegistrationServer_registerConnection_Params {
+	return RegistrationServer_registerConnection_Params{s.List.Struct(i)}
+}
+
+func (s RegistrationServer_registerConnection_Params_List) Set(i int, v RegistrationServer_registerConnection_Params) error {
+	return s.List.SetStruct(i, v.Struct)
+}
+
+func (s RegistrationServer_registerConnection_Params_List) String() string {
+	str, _ := text.MarshalList(0xe6646dec8feaa6ee, s.List)
+	return str
+}
+
+// RegistrationServer_registerConnection_Params_Promise is a wrapper for a RegistrationServer_registerConnection_Params promised by a client call.
+type RegistrationServer_registerConnection_Params_Promise struct{ *capnp.Pipeline }
+
+func (p RegistrationServer_registerConnection_Params_Promise) Struct() (RegistrationServer_registerConnection_Params, error) {
+	s, err := p.Pipeline.Struct()
+	return RegistrationServer_registerConnection_Params{s}, err
+}
+
+func (p RegistrationServer_registerConnection_Params_Promise) Auth() TunnelAuth_Promise {
+	return TunnelAuth_Promise{Pipeline: p.Pipeline.GetPipeline(0)}
+}
+
+func (p RegistrationServer_registerConnection_Params_Promise) Options() ConnectionOptions_Promise {
+	return ConnectionOptions_Promise{Pipeline: p.Pipeline.GetPipeline(2)}
+}
+
+type RegistrationServer_registerConnection_Results struct{ capnp.Struct }
+
+// RegistrationServer_registerConnection_Results_TypeID is the unique identifier for the type RegistrationServer_registerConnection_Results.
+const RegistrationServer_registerConnection_Results_TypeID = 0xea50d822450d1f17
+
+func NewRegistrationServer_registerConnection_Results(s *capnp.Segment) (RegistrationServer_registerConnection_Results, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
+	return RegistrationServer_registerConnection_Results{st}, err
+}
+
+func NewRootRegistrationServer_registerConnection_Results(s *capnp.Segment) (RegistrationServer_registerConnection_Results, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1})
+	return RegistrationServer_registerConnection_Results{st}, err
+}
+
+func ReadRootRegistrationServer_registerConnection_Results(msg *capnp.Message) (RegistrationServer_registerConnection_Results, error) {
+	root, err := msg.RootPtr()
+	return RegistrationServer_registerConnection_Results{root.Struct()}, err
+}
+
+func (s RegistrationServer_registerConnection_Results) String() string {
+	str, _ := text.Marshal(0xea50d822450d1f17, s.Struct)
+	return str
+}
+
+func (s RegistrationServer_registerConnection_Results) Result() (ConnectionResponse, error) {
+	p, err := s.Struct.Ptr(0)
+	return ConnectionResponse{Struct: p.Struct()}, err
+}
+
+func (s RegistrationServer_registerConnection_Results) HasResult() bool {
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s RegistrationServer_registerConnection_Results) SetResult(v ConnectionResponse) error {
+	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+}
+
+// NewResult sets the result field to a newly
+// allocated ConnectionResponse struct, preferring placement in s's segment.
+func (s RegistrationServer_registerConnection_Results) NewResult() (ConnectionResponse, error) {
+	ss, err := NewConnectionResponse(s.Struct.Segment())
+	if err != nil {
+		return ConnectionResponse{}, err
+	}
+	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	return ss, err
+}
+
+// RegistrationServer_registerConnection_Results_List is a list of RegistrationServer_registerConnection_Results.
+type RegistrationServer_registerConnection_Results_List struct{ capnp.List }
+
+// NewRegistrationServer_registerConnection_Results creates a new list of RegistrationServer_registerConnection_Results.
+func NewRegistrationServer_registerConnection_Results_List(s *capnp.Segment, sz int32) (RegistrationServer_registerConnection_Results_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 1}, sz)
+	return RegistrationServer_registerConnection_Results_List{l}, err
+}
+
+func (s RegistrationServer_registerConnection_Results_List) At(i int) RegistrationServer_registerConnection_Results {
+	return RegistrationServer_registerConnection_Results{s.List.Struct(i)}
+}
+
+func (s RegistrationServer_registerConnection_Results_List) Set(i int, v RegistrationServer_registerConnection_Results) error {
+	return s.List.SetStruct(i, v.Struct)
+}
+
+func (s RegistrationServer_registerConnection_Results_List) String() string {
+	str, _ := text.MarshalList(0xea50d822450d1f17, s.List)
+	return str
+}
+
+// RegistrationServer_registerConnection_Results_Promise is a wrapper for a RegistrationServer_registerConnection_Results promised by a client call.
+type RegistrationServer_registerConnection_Results_Promise struct{ *capnp.Pipeline }
+
+func (p RegistrationServer_registerConnection_Results_Promise) Struct() (RegistrationServer_registerConnection_Results, error) {
+	s, err := p.Pipeline.Struct()
+	return RegistrationServer_registerConnection_Results{s}, err
+}
+
+func (p RegistrationServer_registerConnection_Results_Promise) Result() ConnectionResponse_Promise {
+	return ConnectionResponse_Promise{Pipeline: p.Pipeline.GetPipeline(0)}
+}
+
+type RegistrationServer_unregisterConnection_Params struct{ capnp.Struct }
+
+// RegistrationServer_unregisterConnection_Params_TypeID is the unique identifier for the type RegistrationServer_unregisterConnection_Params.
+const RegistrationServer_unregisterConnection_Params_TypeID = 0xf9cb7f4431a307d0
+
+func NewRegistrationServer_unregisterConnection_Params(s *capnp.Segment) (RegistrationServer_unregisterConnection_Params, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
+	return RegistrationServer_unregisterConnection_Params{st}, err
+}
+
+func NewRootRegistrationServer_unregisterConnection_Params(s *capnp.Segment) (RegistrationServer_unregisterConnection_Params, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
+	return RegistrationServer_unregisterConnection_Params{st}, err
+}
+
+func ReadRootRegistrationServer_unregisterConnection_Params(msg *capnp.Message) (RegistrationServer_unregisterConnection_Params, error) {
+	root, err := msg.RootPtr()
+	return RegistrationServer_unregisterConnection_Params{root.Struct()}, err
+}
+
+func (s RegistrationServer_unregisterConnection_Params) String() string {
+	str, _ := text.Marshal(0xf9cb7f4431a307d0, s.Struct)
+	return str
+}
+
+// RegistrationServer_unregisterConnection_Params_List is a list of RegistrationServer_unregisterConnection_Params.
+type RegistrationServer_unregisterConnection_Params_List struct{ capnp.List }
+
+// NewRegistrationServer_unregisterConnection_Params creates a new list of RegistrationServer_unregisterConnection_Params.
+func NewRegistrationServer_unregisterConnection_Params_List(s *capnp.Segment, sz int32) (RegistrationServer_unregisterConnection_Params_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
+	return RegistrationServer_unregisterConnection_Params_List{l}, err
+}
+
+func (s RegistrationServer_unregisterConnection_Params_List) At(i int) RegistrationServer_unregisterConnection_Params {
+	return RegistrationServer_unregisterConnection_Params{s.List.Struct(i)}
+}
+
+func (s RegistrationServer_unregisterConnection_Params_List) Set(i int, v RegistrationServer_unregisterConnection_Params) error {
+	return s.List.SetStruct(i, v.Struct)
+}
+
+func (s RegistrationServer_unregisterConnection_Params_List) String() string {
+	str, _ := text.MarshalList(0xf9cb7f4431a307d0, s.List)
+	return str
+}
+
+// RegistrationServer_unregisterConnection_Params_Promise is a wrapper for a RegistrationServer_unregisterConnection_Params promised by a client call.
+type RegistrationServer_unregisterConnection_Params_Promise struct{ *capnp.Pipeline }
+
+func (p RegistrationServer_unregisterConnection_Params_Promise) Struct() (RegistrationServer_unregisterConnection_Params, error) {
+	s, err := p.Pipeline.Struct()
+	return RegistrationServer_unregisterConnection_Params{s}, err
+}
+
+type RegistrationServer_unregisterConnection_Results struct{ capnp.Struct }
+
+// RegistrationServer_unregisterConnection_Results_TypeID is the unique identifier for the type RegistrationServer_unregisterConnection_Results.
+const RegistrationServer_unregisterConnection_Results_TypeID = 0xb046e578094b1ead
+
+func NewRegistrationServer_unregisterConnection_Results(s *capnp.Segment) (RegistrationServer_unregisterConnection_Results, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
+	return RegistrationServer_unregisterConnection_Results{st}, err
+}
+
+func NewRootRegistrationServer_unregisterConnection_Results(s *capnp.Segment) (RegistrationServer_unregisterConnection_Results, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0})
+	return RegistrationServer_unregisterConnection_Results{st}, err
+}
+
+func ReadRootRegistrationServer_unregisterConnection_Results(msg *capnp.Message) (RegistrationServer_unregisterConnection_Results, error) {
+	root, err := msg.RootPtr()
+	return RegistrationServer_unregisterConnection_Results{root.Struct()}, err
+}
+
+func (s RegistrationServer_unregisterConnection_Results) String() string {
+	str, _ := text.Marshal(0xb046e578094b1ead, s.Struct)
+	return str
+}
+
+// RegistrationServer_unregisterConnection_Results_List is a list of RegistrationServer_unregisterConnection_Results.
+type RegistrationServer_unregisterConnection_Results_List struct{ capnp.List }
+
+// NewRegistrationServer_unregisterConnection_Results creates a new list of RegistrationServer_unregisterConnection_Results.
+func NewRegistrationServer_unregisterConnection_Results_List(s *capnp.Segment, sz int32) (RegistrationServer_unregisterConnection_Results_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 0, PointerCount: 0}, sz)
+	return RegistrationServer_unregisterConnection_Results_List{l}, err
+}
+
+func (s RegistrationServer_unregisterConnection_Results_List) At(i int) RegistrationServer_unregisterConnection_Results {
+	return RegistrationServer_unregisterConnection_Results{s.List.Struct(i)}
+}
+
+func (s RegistrationServer_unregisterConnection_Results_List) Set(i int, v RegistrationServer_unregisterConnection_Results) error {
+	return s.List.SetStruct(i, v.Struct)
+}
+
+func (s RegistrationServer_unregisterConnection_Results_List) String() string {
+	str, _ := text.MarshalList(0xb046e578094b1ead, s.List)
+	return str
+}
+
+// RegistrationServer_unregisterConnection_Results_Promise is a wrapper for a RegistrationServer_unregisterConnection_Results promised by a client call.
+type RegistrationServer_unregisterConnection_Results_Promise struct{ *capnp.Pipeline }
+
+func (p RegistrationServer_unregisterConnection_Results_Promise) Struct() (RegistrationServer_unregisterConnection_Results, error) {
+	s, err := p.Pipeline.Struct()
+	return RegistrationServer_unregisterConnection_Results{s}, err
+}
+
 type TunnelServer struct{ Client capnp.Client }
 
 // TunnelServer_TypeID is the unique identifier for the type TunnelServer.
@@ -1027,6 +2133,46 @@ func (c TunnelServer) ReconnectTunnel(ctx context.Context, params func(TunnelSer
 	}
 	return TunnelServer_reconnectTunnel_Results_Promise{Pipeline: capnp.NewPipeline(c.Client.Call(call))}
 }
+func (c TunnelServer) RegisterConnection(ctx context.Context, params func(RegistrationServer_registerConnection_Params) error, opts ...capnp.CallOption) RegistrationServer_registerConnection_Results_Promise {
+	if c.Client == nil {
+		return RegistrationServer_registerConnection_Results_Promise{Pipeline: capnp.NewPipeline(capnp.ErrorAnswer(capnp.ErrNullClient))}
+	}
+	call := &capnp.Call{
+		Ctx: ctx,
+		Method: capnp.Method{
+			InterfaceID:   0xf71695ec7fe85497,
+			MethodID:      0,
+			InterfaceName: "tunnelrpc/tunnelrpc.capnp:RegistrationServer",
+			MethodName:    "registerConnection",
+		},
+		Options: capnp.NewCallOptions(opts),
+	}
+	if params != nil {
+		call.ParamsSize = capnp.ObjectSize{DataSize: 8, PointerCount: 3}
+		call.ParamsFunc = func(s capnp.Struct) error { return params(RegistrationServer_registerConnection_Params{Struct: s}) }
+	}
+	return RegistrationServer_registerConnection_Results_Promise{Pipeline: capnp.NewPipeline(c.Client.Call(call))}
+}
+func (c TunnelServer) UnregisterConnection(ctx context.Context, params func(RegistrationServer_unregisterConnection_Params) error, opts ...capnp.CallOption) RegistrationServer_unregisterConnection_Results_Promise {
+	if c.Client == nil {
+		return RegistrationServer_unregisterConnection_Results_Promise{Pipeline: capnp.NewPipeline(capnp.ErrorAnswer(capnp.ErrNullClient))}
+	}
+	call := &capnp.Call{
+		Ctx: ctx,
+		Method: capnp.Method{
+			InterfaceID:   0xf71695ec7fe85497,
+			MethodID:      1,
+			InterfaceName: "tunnelrpc/tunnelrpc.capnp:RegistrationServer",
+			MethodName:    "unregisterConnection",
+		},
+		Options: capnp.NewCallOptions(opts),
+	}
+	if params != nil {
+		call.ParamsSize = capnp.ObjectSize{DataSize: 0, PointerCount: 0}
+		call.ParamsFunc = func(s capnp.Struct) error { return params(RegistrationServer_unregisterConnection_Params{Struct: s}) }
+	}
+	return RegistrationServer_unregisterConnection_Results_Promise{Pipeline: capnp.NewPipeline(c.Client.Call(call))}
+}
 
 type TunnelServer_Server interface {
 	RegisterTunnel(TunnelServer_registerTunnel) error
@@ -1040,6 +2186,10 @@ type TunnelServer_Server interface {
 	Authenticate(TunnelServer_authenticate) error
 
 	ReconnectTunnel(TunnelServer_reconnectTunnel) error
+
+	RegisterConnection(RegistrationServer_registerConnection) error
+
+	UnregisterConnection(RegistrationServer_unregisterConnection) error
 }
 
 func TunnelServer_ServerToClient(s TunnelServer_Server) TunnelServer {
@@ -1049,7 +2199,7 @@ func TunnelServer_ServerToClient(s TunnelServer_Server) TunnelServer {
 
 func TunnelServer_Methods(methods []server.Method, s TunnelServer_Server) []server.Method {
 	if cap(methods) == 0 {
-		methods = make([]server.Method, 0, 6)
+		methods = make([]server.Method, 0, 8)
 	}
 
 	methods = append(methods, server.Method{
@@ -1134,6 +2284,34 @@ func TunnelServer_Methods(methods []server.Method, s TunnelServer_Server) []serv
 			return s.ReconnectTunnel(call)
 		},
 		ResultsSize: capnp.ObjectSize{DataSize: 0, PointerCount: 1},
+	})
+
+	methods = append(methods, server.Method{
+		Method: capnp.Method{
+			InterfaceID:   0xf71695ec7fe85497,
+			MethodID:      0,
+			InterfaceName: "tunnelrpc/tunnelrpc.capnp:RegistrationServer",
+			MethodName:    "registerConnection",
+		},
+		Impl: func(c context.Context, opts capnp.CallOptions, p, r capnp.Struct) error {
+			call := RegistrationServer_registerConnection{c, opts, RegistrationServer_registerConnection_Params{Struct: p}, RegistrationServer_registerConnection_Results{Struct: r}}
+			return s.RegisterConnection(call)
+		},
+		ResultsSize: capnp.ObjectSize{DataSize: 0, PointerCount: 1},
+	})
+
+	methods = append(methods, server.Method{
+		Method: capnp.Method{
+			InterfaceID:   0xf71695ec7fe85497,
+			MethodID:      1,
+			InterfaceName: "tunnelrpc/tunnelrpc.capnp:RegistrationServer",
+			MethodName:    "unregisterConnection",
+		},
+		Impl: func(c context.Context, opts capnp.CallOptions, p, r capnp.Struct) error {
+			call := RegistrationServer_unregisterConnection{c, opts, RegistrationServer_unregisterConnection_Params{Struct: p}, RegistrationServer_unregisterConnection_Results{Struct: r}}
+			return s.UnregisterConnection(call)
+		},
+		ResultsSize: capnp.ObjectSize{DataSize: 0, PointerCount: 0},
 	})
 
 	return methods
@@ -2185,152 +3363,214 @@ func (p TunnelServer_reconnectTunnel_Results_Promise) Result() TunnelRegistratio
 	return TunnelRegistration_Promise{Pipeline: p.Pipeline.GetPipeline(0)}
 }
 
-const schema_db8274f9144abc7e = "x\xda\xccX}\x8c\x14g\x19\x7f~\xf3\xee\xee\xdcq" +
-	"\xbb\xecMf\x89pis\x86\xd0\xd4\x12[\x8b'\x86" +
-	"\xe2\xc7\xdd\xd1\x03=\xe4c\xe7\x16LK\xa9\xe9\xdc\xde" +
-	"{\xc7\x9c\xbb3\xdb\x99\xd9+\x87\xa5\x85\x0b\xa4\xa5\xc1" +
-	"\xdaR0\x05[\x834\xc6T\x8d\x16?\xa254\xa1" +
-	"\xd1\xd8\x9a6V\x0c\x1a\xa84j)ilJP\xc4" +
-	"\x98\x9a\xea\x98gvgv8Z\x0a\xe5\x9f\xfe\xb7\xf7" +
-	"\x9b\xe7}\xbe\xdf\xe7\xf7\xbcw\xe3\x89T\x9f\xb2 \xfd" +
-	"z\x86\xc8(\xa63\x81\x9c\xff\xfbM\xfb\xaf\xf9\xe5\x14" +
-	"\x19]@p\xcf\xa1\xe5\x85\xb7\xfc\xa9?QZ\xa8D" +
-	"=\xb7\x8aM\xd0\xab\xfcS\xb7\xc4\xeb\x84\xe0\xd3\xd5\x97" +
-	"\x0e|r\xcf\x0b\xdbH\xebRZ\xc2\x84\x9e\x95\xa9M" +
-	"\xd0\xcd\x14K\xde\x9eZM\x08\xfe\xb9{\xf6\xf7\xbe\xf5" +
-	"\xdb\xe7\xb7\x93v-\xa8\xa9\xae\x9ez\x19\x04}G\xea" +
-	"\x87\x84\xe0\xa5\x8f\x1e\xfa\xc5C?\xbe\xef\x1bd\\\x0b" +
-	"\x10\xf1\xd1\x9e\xeb\xd2\xffa\x81\xcf\xa4{\x09\xc1\xeec" +
-	"\xcf\xac\xaa>\xbc\xef@CC\xf8]\xa6\x15\x85R\xc1" +
-	"\xb6\xc1\x7fW\xd7>Qz\xa2\xa9;\x1d\xba\x9a>\x0b" +
-	"BO5\xdd\x0dB\xb0\xf0\xe5S\xabW\xfeh\xf4;" +
-	"\x89\xb3;2\x9b\xf8\xec\xacA\x9c8\xbc \xf5\xb3\xa4" +
-	"_\xdb3o\xb0\xd9\xbd\x19\xf6\xeb\xea\xd3Kr\xf6\x99" +
-	"\xa9\xc3\xa4u]\x90\x8f\x9b\xd4\xe5\xd0W\xaa\x1c\xe5\xa0" +
-	"\xca\xc2\xcbo{dW\xfa\xd4#\xcfq\xf6\x12\x09I" +
-	"\xb7\xb1\xf4)\xd5\x85\xfe\x16K\xf7\xfcK\xfd\x90 \x04" +
-	"]O}\xea\x07KF\x8e\xbf0M\xb7\xc2\x0a\xeb\x1d" +
-	"g\xf5\xad\x1d\xfcks\xc7]\x84\xe0\xe4\xf5\x07\xbf\xf2" +
-	"\xb7\xaf\x1e9\xdat\x14\xac\xe6xG\x98\x9f\xd3\x1d\x9c" +
-	"\x1f\xe5\x949g\xcb\x1f?{\"\x11c.\xfb*(" +
-	"\x15\xac\xfa\xe2m\xe3\xed\x9bO\x9eL\x1eE6\x8cq" +
-	"V\x96\x8f.\xbc\xa3_\xae_t\xcb\x1b\xa4u\x89\xf3" +
-	"\xca\xb80\xbb\x18\xfa\xd2,\x1f\xe8\xcf\xde\x07\xfd\xd6\x9c" +
-	"J\x14<x\xcf\xc0\xea\x9b\xe6>{6\xa9\xaf?\xc7" +
-	"\xf9\xd6\xd7\xe6X\xdf\xe8\xa27?w\xcd\x83\xbf>;" +
-	"-\xaeP\xb0\x9e\x9b\x0f};\xeb\xd1\xb7\xb2\xf0\x99e" +
-	"\xdf<\xda\x95\xef:7\xad\xdf2,\xfb\xed\xdc8\xf4" +
-	"\xa7Y\xb6\xe7\xa7\xb9\xe7\xb8\x90_W\x1f;\xb9\xe5\xcf" +
-	"_z;i\xfa\xc9\xfc\xabl\xfa\x99<\x9b\xbe\xfb\xcc" +
-	"\xde\xcf\x7fm\xfd\xf7\xff\x97\xc8\xc2+\xf9)\xae\xb4_" +
-	"\xb7mYqk\xa9\xf2\xc7\xa2\x9f\xe5\x1b\xcaf\xcd\xae" +
-	"-\xee\xaf\xfb\x1b\xa4\xed[e\xd3\x97C\xb2\xd7\xab9" +
-	"\xb6'\x8b\x80\xd1)RD)\x10i\xe68\x91q\x87" +
-	"\x80QQ\xa0\x01\x05\xeeQ\xcdbp\x83\x80\xe1+\xd0" +
-	"\x14\xa5\x00\x85H\xbbs.\x91Q\x1106*\x80(" +
-	"@\x10i\xf5]D\xc6F\x01c\x9b\x82\xa0&\xdd\xaa" +
-	"iK\x9b\xf2\xfeR\xd7E\x96\x14d\x09\x81+}w" +
-	"\xd2\x1c\xaeP^&`u\xfc.\x1f9R\x90#\x04" +
-	"\x1b\x9c\xba\xeb\xad\xb5}X\x95!9\xeaJ\x0f\x1b\x90" +
-	"!\x05\x19\xc2\xc5\xc2[\xba\xd1\xf2|\xcb\x1e[\x13\xe2" +
-	"\xbdE\xa7b\x95'9\xbcl\xe8\xf0\xd5\x8b\x89\x00m" +
-	"\xd6:\"(\x9a\xb6\x84\xa8\xd7\x1a\xb3\x1dW\x06#\x96" +
-	"Wvl[\x92(\xfb\xf7\x0e\x9b\x15\xd3.\xcb\xd8P" +
-	"\xe6BC\x0d\x03%\xe9NH\xf7\x063\x91\xd4yE" +
-	"\xd35E\xd53\xb2qB\x97\xae#2\x06\x04\x8cb" +
-	"\"\xa1+\x97\x13\x19+\x04\x8c[\x12\x09]\xbb\x84g" +
-	"\x93\x80\xb1^A\xe0\xb8\xd6\x98e\xdf,I\xb8\xc9\xbc" +
-	"x\xbemV%\x11Ey\xbb\xd7\xa9\xf9\x96c{\xe8" +
-	"l]J\x02:\x13\x99z\xaf\x00\xea\xb6+\xc7,\xcf" +
-	"\x97n\x03\x9e\xd7\xcbQT=#\x15\x07\x91\xdbGd" +
-	"t\x0a\x18W)\x08\xc6\\\xb3,\x8b\xd2\x85\xe5\x8c\xac" +
-	"2m\xa7$d\x19iR\x90N\x18\x9dy\xb9F\x87" +
-	"\xa4W\xaf\xf8\x1e\xc5\xa7.~\xde\x95a\xc5\xca~\xf3" +
-	"x\xb1\xbb\xe1s!\xf6y\xf3\xdcV/\xc6\x89\xdf:" +
-	"Ldl\x110v&\x12\xbf\x83Kt\xbf\x80\xb1[" +
-	"\x81&\x9a\xad\xfc0\x97\xe8!\x01\xe31\x05Z*U" +
-	"@\x8aH\xdb\xcb%\xda-`\xecW\xce\xefX9!" +
-	"m\x7f\xc0\x1a#Uz-\x94]\x1c\xb0\xc6$\x09\xef" +
-	"J\x8b\xd8\xf6\x1e\xf9p\x86=\xa7\"}9 \xcb\x15" +
-	"\xd35}kB6\xbe\xdf\xdcHST\xd4K\xee\x8a" +
-	"i\xe5)\x9a\xf90\xbf\x1f\xa4\xc6\xbe\xf8\x84\xb3\x1c\x9b" +
-	"(\xbc\xfd-\x97\xb9%\xfa\x04\x8c\x15\x09\x97\x07?\x9e" +
-	"\x88#ry\xe5p+\x0e\xf5\xcbr2\xf2\xaa[V" +
-	"M\xab\x12\xcf\xb2f0\xfd\xa4~\xa1%s1\xff\x86" +
-	"\xc2\xac\xba\xa1w\xabk\xdda\x84\xec\xe3\xa2\xc8G}" +
-	"\x12\xcb\x89J\x1b!P\xda\x86\x96\x9b\xfaV,!*" +
-	"\xdd\xcd\xf8\xfdhy\xaaoG\x17Qi\x0b\xe3;\x11" +
-	"Ob}\x07\xbeKT\xda\xc9\xf0\xa3,\x9e\x12a\x07" +
-	"\xeb{B\xf5\xbb\x19\xdf\xcfx:U@\x9aH\x7f\x1c" +
-	"\xf3\x89J\x8f2\xfe\x13\xc63J\x01\x19\"\xfd \xc6" +
-	"\x89JO1~\x88q5]`2\xd2\x9f\x86KT" +
-	"\xfa9\xe3\xbfb\xbcmv\x01mD\xfa\xb3!~\x98" +
-	"\xf1\x17\x19o\x9fS@;\x91\xfe\x1bL\x11\x95\x9eg" +
-	"\xfc(\xe33P\xc0\x0c\"\xfd\x08\xf6\x11\x95\x8e2\xfe" +
-	"\x17\xc6;2\x05t\x10\xe9\xaf\x84\xfe\x1cc\xfc5\xc6" +
-	"\xb3\xa9\x02\xb2D\xfa_q\x80\xa8\xf4\x1a\xe3\x7fg<" +
-	"\xa7\x16\x90#\xd2O\x87q\xbd\xc9x\x9b\xa2 (W" +
-	",i\xfb\x83#\xc9\x8e\x9a\x90\xaeg9v\xf4\xb7p" +
-	"\xbc\xb8d\xb2I\x1dh\xb4{\xd1\xc93w \xdf\xda" +
-	"\xfc\x08\xc8\x13\x82\x9a\xe3TV\x9d\xdf\xa9y\xdf\x1c\xf3" +
-	"0\x93P\x14@gk\xd9!0\x184\xe7\x94Ey" +
-	"\xc7\x1e\x1c\x89y\xac\xd1:+\x1c\xea.\x9b\x95\xc1Z" +
-	"\xec\x89\xe5\xf5\xd7}\xa7^\xa3\xee\x11\xd3\x97#\x00)" +
-	"\xe0\x8d\xc0\xad\xdb\xcb\\\xa7\xba\x06\xd2\xadZ\xb6Y\xa1" +
-	"\xf8K\xd9\xa9\xd6\\\xe9y\xb0\x1c\xdb\xa8\x9b\x15K\xf8" +
-	"\x93h'\x05\xed\x84|\xbdn\x8d\xc4\xba\xedz\xb5\xe8" +
-	"\xca\x09\x0bN\xdd\xeb\xf7}YUk\xbe\x17{4*" +
-	"M\xbf\xeeJ\x8fCkF\xc3\x07g&:Z\x99\xde" +
-	"\xd1\xdd\xb5\xc5k\xcc1\xee\xe0\xb6\xf8\x96]7\x9f\xc8" +
-	"\x98'`\xdc\x98\xb8e\xd7\xf3-\xfb\x88\x80\xf1\x09\x05" +
-	"y\xbe\xea\xf1\x8d\x9a0+uy\xc1\xdd\xc9\\\xe6\xfc" +
-	"\x1f\xeam\xf0G\x92\xb4\x16\x13\x19m\x02FAA\xaf" +
-	"\x1b~Fg\xb4\x86]&G\x8eI\xbf\xf1k\xd0\x1e" +
-	"u\x98\xe5\xd5\xcb\x99\xa5\xe7\x9f\x1e\x92^\xfeR\\m" +
-	"\xad\x97\xd3\x9c\x15\xeff\xae\xb7a\x85\xcb1[\xa4\x89" +
-	"\xe2\xad\x1f\xd1*\xab\x1d\xdcD\x8a\xf6\xa4\x8a\xd6\x1e\x8d" +
-	"hm\xd6\x1ewI\xd1\xf6\xa8P\xe2G\x0a\xa2\xc7\x88" +
-	"\xb6\xe3\x01R\xb4\xed*D\xfc\xc6@\xb4\x82.\x98\x9c" +
-	"\x01R\xb4\xcd*R\xf1\xf3\x07\xd1\x02\xab\xdd9N\x8a" +
-	"f\xa9H\xc7\xcf\x17D+\xbev\xfb\x14)\xdaZ5" +
-	"\x88\xb8\x86z\x1bq\xf4!\x88RF\xdda\xd2\xfa\x10" +
-	"D\x1b\x03\"N\"\xeaC\x10\xf1\x9ex7\xe2\x0b\xa5" +
-	"\xa2\x1d\x8d\xf2\xbc\xa5\xf5\xf1\x12\xdah\x1f4\xfb\x87\xfa" +
-	"P\x04\xde/9\x0e\xc9\xee+i\xbew\xa8g\xc3N" +
-	"\x9eC\xe7j&\xf4\xf2*\x9e\x150f+\x08*N" +
-	"\x93\xe7\xf2\xab\x127\xeab\xfc\xd3p8b\xa1<\x1f" +
-	"f\xfd\x1f\x8e\xf5\x1fa\x8a|Q\xc08\x96\xb8\xbc\x7f" +
-	"`\xf0w\x02\xc6\x89\x04E\x1eg\xaa?&`\x9ck" +
-	"\xed\xff\xffx\x80\xc88'0\x94\xa0\x1c\xed\xbf,\xf8" +
-	"6\x0f\xe6\x90p\xd0 \x9c4v\x11\x95\xdax`\x17" +
-	"B\xc2I5\x08G\xc30Q\xa9\x93\xf1\xab\x92\x843" +
-	"\x07\xeb\x88J\xb3\x19\x9f\x07\x05\xaaL\xbc\x1d\xean\x8b" +
-	"\x92+\xce\xd8\x0a\xcb~\xc7)\x16=H\xe0/3\xad" +
-	"J\xdd\x95\xd4\x1a\xa2\x8dD\x0d\x0e$\xe6z\xe3\xa5\xd2" +
-	"?\xca\x1dW\xe2~\x19\x81\x07\x95\x14\xa8\x97\xb7\xf0\xbd" +
-	"\xaf\x87\x04\xaf\xc3\xea\xa5\x0c\x89\xf8\x1f\x19\xd3\x9a\xaa\xfd" +
-	"J\x17\xc6h!\xff\x7f\x00\x00\x00\xff\xff/\xf3\xa2\xe2"
+const schema_db8274f9144abc7e = "x\xda\xccYkl\x1c\xd5\xf5?g\xee\xaeg\xfdb" +
+	"=\x99M\x9cX\xf0\xf7\xbfQ\"\x8a!\x80\xe3R\x85" +
+	"\x14j;\xd8)6yx\xbcq\xc5#A\x8cwo" +
+	"\xecqwg63\xb3\xc6N\x13\x92\x98\xa4\x10Dy" +
+	"\x84\x84G\x0a-\x04\xa9UiiI\xa1j\xa9\xa8J" +
+	"\xfa\x82\x8agP\xa8\x02\xa4jKH[\xa2P\xda@" +
+	"\x85\xa8\x80\xa9\xce\xcc\xce\xc3kc;\xd0\x0f\xfd\xb6:" +
+	"s\xee\xbd\xe7}~\xe7\xec\xf9\xcb\xc56\xa19.V" +
+	"\x03([\xe3\x15\x0eozi\xe3\xfd\x0b\x7f5\x06J" +
+	"\x03\xa2s\xdd\x13\xdd\xa9\xf7\xed\xb1\xd7 \xceD\x80\x16" +
+	"-\xbe\x11\xe5\xcdq\x11@\x1e\x8d\xff\x15\xd0\xb9L:" +
+	"\xef\xaa\xd4\x8b\xcf_\x0fRC\x949F\xcc\xeb*\x9a" +
+	"P\xceW\x10\xb3VA\xcc\x17\xe5_\xd8\xf7\xf9=\xcf" +
+	"l\x07\xa9A\x08\x99\x01[\xfa\xc4\x8d(k\"qr" +
+	"q5\xa0\xf3\xce\xee\xb9\xdf{\xe0\xf9\xa7w\x80t&" +
+	"B\xe9\xed\xcd\xe2\xab\x08(\xdf.\xfe\x10\xd0i]\xfe" +
+	"\xdc\xe3\x0d-w\xee.{W \xc6\xe6D\x13\xca\xed" +
+	"\x09\xba\xed\xe2\xc4\xb5\x80\xce\xfc\xe1\x85\xd7\xfc\xf27\x8f" +
+	"\xde\x05\xca\"D\xe7H\xff\xd9/\xb3\xfb\x1ez\x0d\xfa" +
+	"PD\x01\xa0\xe5\x81\xc4>\xbax\xbf\xcb\xfb\xc29O" +
+	"\xfc\xec\xb6Go\xf8\x06(g\"\x02\xb8\x8a\xcc\xae\xfc" +
+	"71\x9cU\xd9\x0a\xe8\xec>\xfc\xf3U\xf9\xdb\xf7\xee" +
+	"\xf3Ds\xbf+\x95\x82\x001g{\xd7{\xf9\xbe\x07" +
+	"\xd3\x0f\x96\x84&+\xb5tV\x9eD\xc0\x96+*\x1b" +
+	"\x11\xd0\xb9\xe0\xd5c\xabW\xfeh\xfdw\"g\x8bU" +
+	"\x1b\xe9\xec\xc3\xffwY\xe5\xc8\xb1\xe5\x8f\x80\xb4\xc8\xff" +
+	"\xb2\xa1\xaa\x97\xbe\xc4\xd6\xb1\x8f\xd4\xbb\x7f\xf1X\xb9?" +
+	"\\U\xf3U\xfd(o\xab\"U7W\x91\x89o:" +
+	"\xb0\xf7\xec\xc4\xb7\xde\xf9\xf1dvQ\xab\xfbQ.V" +
+	"\x13\xf3\x86j\xd2uv\x17\x1ey\xb29\xf6\x93\xa8\x95" +
+	"\x0fV\x1f']\x8fU\x93\x95\xcfxkY\xad\xfe\xf6" +
+	"\xd8\x93e\xb7\xb9\x8c;j\xbaQ\xbe\xa7\x86n\xdbS" +
+	"C\xcc\xddW\xdd\xb1+~\xec\x8e\xa7H\xd0\x88{\xe3" +
+	"\x09\xd7'\xb5&\xca\x9d\xb5\xf4\xb3\xbd\xb6\x9e\x01:\x0d" +
+	"\x8f|\xe1\x07\xcb\xb2\xaf<3\x89\xa4\xf2\x81\xba\x93\xf2" +
+	"su\xf4\xebwu$\xe8\xd1E\xfb\xbf\xfa\xe6\xd7\x0f" +
+	"\x1e*\x09\x8at\xcdB\xc9u\xca\x85\x129%\xf0i" +
+	"\x99\x91\\\xce+\xa4!\x94\xf3\x92\x1b\x87.\xb7pL" +
+	"\x9d\xb7\xf5\xf7_<\x12qC^z\x1d!\xe6\xac\xfa" +
+	"\xf2UC\x95\x9b\x8f\x1e\x8d>\xa4J\xaeE\x8a\xee\xd1" +
+	"\xbf\x7f\xfb\xf8\xad'\xf2\xd9\xbf\xb8\xa1\xe4\xdbl\x8f\xb4" +
+	"T\x00\x94\x1f\x96\xc8\x03\xf5\x8d\xb5\x9d\xf3\x0f\xf7\x1c\xf7" +
+	"<\xe9]\xb1s\xd62bx`\x16]q\xc15\xed" +
+	"|\xed\x92\xcb\x8f\x83\xd4\xc0\xc6e\xc1\x81YKQ>" +
+	"8\x8b\x0e<7\xeb\x06\x94\x8f\xc9\xf5\x00\xce-\xd7u" +
+	"\xac\xbep\xfe\x81\x93Q\x91^\x96)\xaa\xe47e\xba" +
+	"o\xfd\x92\x13_Zx\xcboO\x96\x19\xd2e\xacL" +
+	"5\xa1</E\xaa\xcfN\xb5\x02\xbe\xbd\xfc\x9b\x87\x1a" +
+	"\x92\x0d\xef\x96\x99\x89r\xb4\xe5\xc2\xd4\x10\xca+\x89\xb7" +
+	"\xa5+\xf5\x14\x85\xeb\xd7^\xbbz\xe4\xa5\xeb\xdf\xf9W" +
+	"\xb9G\xdd\xab/\x9e\xd3\x8b\xb22\x87\xae^9\x87\xfc" +
+	"\x7f\xd7\x9a\xbfm9\xb1g\xce{\x13\xf4zk\xce\x10" +
+	"\xcaXO\x9c\x1f\xce\xb9A^G\xbf\x9c\x17\xc5\x07\x9b" +
+	";\xb6<\xf3~$\xe0;\xeb\xbb)\xe0\xef\x14\xef=" +
+	"\xba\xf5\x8fW\x7f\x10U\xb8\xbd\xfeuR\xb8\xaf\x9e\x14" +
+	"\xde\xf4\xf6=\x97\xde\xba\xf6\xfb\x1fE\xb3\xa8~\x8c\x8e" +
+	"\xdaE]\xe79\xb3\x10\xcb\x9c\xe7\xff\xcc\x9c\x9bQ\x0b" +
+	"zai{\xd1\x1e\xe4\xba\xadeT\x9b\xf7\xf2V\xab" +
+	"`\xe8\x16\xefAT\xeaX\x0c \x86\x00\x92:\x04\xa0" +
+	"\\\xc3P\xc9\x09(!\xa6\xc8\xc1\x92F\xc4A\x86\x8a" +
+	"-\xa0$\x08)\xaa\x18\xd2\x86\xf9\x00J\x8e\xa12\"" +
+	" \xb2\x142\x00\xa9\xb8\x0b@\x19a\xa8l\x17\xd0)" +
+	"p3\xaf\xea\\\x87\xa4\xddi\x9aX\x03\x02\xd6\x00:" +
+	"&\xb7\xcdQ\xb5?\x07I\x1e!\x8bC\xd7\xdaX\x0b" +
+	"\x02\xd6\x02:\x83F\xd1\xb4\xfat\x1b\xb5\\/_o" +
+	"r\x0b\x07\xb1\x02\x04\xac\x00\x0c\xd4c\x13\xd5\xbb$\xa7" +
+	"q\xddNv\xe9\xeb\x8d2\xa5\xba'S\xaa\xbb\xa4\xd4" +
+	"\xf6\x88R\xdb\x96\x01(\x9b\x18*7\x0a(\xb1\x92V" +
+	";\x9a\xa8-0Tn\x16\xd0\xc9\xb8\x8fte\x01 " +
+	"\x90w=W\xed\xa2\xc9-\xa2\x9d\x06\xd8\xc3\xd0U\xeb" +
+	"4\xc0-\xc3\xdc\xb44C\xf7\xd5L\xaaff00" +
+	"\xc5\x14\xae\xea\x1c\xd1,[\xd3\x07\xd6\xb8\xf4\xd6\x1e#" +
+	"\xa7eFI\xab\x1aW\xce3\x96\x02 J\xb3\xaf\x04" +
+	"@A\x92\x96\x01\xb4j\x03\xbaar'\xabY\x19C" +
+	"\xd79\xb0\x8c\xbd\xa5_\xcd\xa9z\x86\x07\x0fUL|" +
+	"\xc8{ \xcd\xcdan\x9e\xabF\x02dA\x8fj\xaa" +
+	",o)5\x81\x1d;\xaf\x04P:\x18*=\x11;" +
+	"\xae$;\xae`\xa8\\\x1e\xb1c\x1f\xd9\xb1\x87\xa1\xb2" +
+	"V@\xc70\xb5\x01M\xbf\x84\x033\xa3>\xb6l]" +
+	"\xcds\xb2Y\xc9\x1e[\x8c\x82\xad\x19\xba\x85ua\x1d" +
+	"\x05\xc4\xba\xa9\xbd\xee)\x90\xa4\xd8&\xfb$\x02i\xcf" +
+	"\"i?\xcbP\xf9\\D\xdaf\x0a\xe5\xf3\x19*\x17" +
+	"\x09\xe8\xa8\x99\x8cQ\xd4\xed5\xc0\xd4\x812\xa7\xa49" +
+	"$3&\x0f\xe5\xf5\x9f\x8dO\x12wd\xef\x0c\x89\xde" +
+	"\xcb\xbd\x9c:\xd7\xe4\x96X\xcc\xd9$M\x8d\xe3x\xe2" +
+	",\x06P\x160T\xce\x17\xb0\x16?r<y\x16\xed" +
+	"\x0a\xe5i\xe4\xa6i\x98X\x17\xd6\x9c\x92\xf6\x99\xd2\x03" +
+	"h\xe8\x1d\xdcV\xb5\x1c\x92\x8d\x826Wf\xa3\xe9\x9c" +
+	"\\\xd4M>\xa0Y67=\xf2\x82V\xf2t\xdeR" +
+	"b\x81\xe9j\xf7\x02(u\x0c\x95\xd3\x05t\x06L5" +
+	"\xc3{\xb8\x89\x9a\x91]\xa5\xeaF\x9a\xf1\x0c\xc6A\xc0" +
+	"x\xe4\xd1\xd3N\xf5\xd1^n\x15s\xb6\x05\xc1\xa9\xa9" +
+	"\xcf\x9b\xbcd\x84\xd2\xf1\x9eFO\xe6T \xf3\xe6\xf9" +
+	"a\xed\x09\xdc\xbd\xad?L\xdd 8wR`\xdc\xc8" +
+	"P\xd9\x1dI\xf2\xdb)\x8coc\xa8\xdc+\xa0\x14\x8b" +
+	"\xa50\x06 \xddCa\xbc\x9b\xa1r\xbf0\xbeB\xf1" +
+	"a\xae\xdb\x1d\xda\x00\x88\xdc\x0a\xa9$b\x876\xc0\x81" +
+	"Y\x9f6\xd0\x13\xd3\xd8\xc3\xe8\xb7\x8c\x1c\xb7y\x07\xcf" +
+	"\xe4TS\xb5\xb5a\xee}/\x05\xa3\xef\xd4\xa9.\xec" +
+	"u=B\x87\x0d}\x82\x9b\xc2\xa0.\xb9\x0a\xad\xa9\xea" +
+	"U\xc8\xbe\xba`k\xa2\xa1[e%x)\x80\xb2\x96" +
+	"\xa12\x18\xf1\x0e7\x01\x94,C\xa5  \x96\x9c\x93" +
+	"\x1f\x0b\xdb\x8a\xc4\xb0\xd4W\xf6\x86\xbem\xf5*0\xd6" +
+	"\x85\xb8\xbbd;\xaf\xce\xac0\xa01\xa3\xe6\xba\x0a\x81" +
+	"\x07L^\xc8\xa9\x19\xde\x89\xa5\x9a\x0a\x88  \xba\x0e" +
+	"\xcb\x17LnY\xa8\x19\xbaRTs\x1a\xb3G't" +
+	"\x9a)\xb5\xa5|\x14\xb5\x9cUVz\x9a\xc2\\\x0f\xb4" +
+	"]D\xa5\xe7\x1c\x86\xca\x12\x01\x93\xc5\xa2\x96\x0d\x04\xcc" +
+	"\x19\x19\xd7\x09\x90\\\xa5\xe6\xf9\x84\xf6P1mn\x8c" +
+	"\xcb\xac\x1e5\xe9\xa6\xc6\xffR\xdd\x9e\x1a\x8c\x90\xea\xe0" +
+	"6\xb7Pd\xca\xe66\x86\xca\x8a\x88\xc8]\x8b#z" +
+	"\xf8\"\xaf\xec\x0f\xf5\x10\xbf\xc2G}\xa9\x1ay\x9e*" +
+	"\xa5o\xcc\x922\xed ^\x16\xf2L%_4;V" +
+	"\x17\x1a]\x0dI\xc6%\xbe\x8c\xf2(v\x03\xa4G\x90" +
+	"az;\x86b\xca\xdbp\x19@z\x13\xd1o\xc4P" +
+	"Ry\x076\x00\xa4\xb7\x12\xfdf\x0c@\x93\xbc\x13\x1f" +
+	"\x02H\xdfL\xe4\xbb\x89=\xc6\xdc\xe2#\xefq\xaf\xdf" +
+	"M\xf4\xfb\x89\x1e\x8f\xa50\x0e \xdf\x87M\x00\xe9\xbb" +
+	"\x89\xfe\x18\xd1+\x84\x14V\x00\xc8\xfbq\x08 \xfd\x08" +
+	"\xd1\x9f \xba\x18O\x11n\x94\x1fG\x13 \xfdS\xa2" +
+	"\xff\x9a\xe8\x89\xb9)L\xd0\x80\xe1\xd2\x9f$\xfa\xb3D" +
+	"\xaf\x9c\x97\xc2J\x1a7p\x0c \xfd4\xd1\x0f\x11\xbd" +
+	"\x0aSX\x05 \x1f\xc4\xbd\x00\xe9CD\xff\x13\xd1\xab" +
+	"+RX\x0d \xff\xc1\x95\xe70\xd1\xdf zM," +
+	"\x855\x00\xf2\x9fq\x1f@\xfa\x0d\xa2\xff\x83\xe8\xb5b" +
+	"\x0ak\x01\xe4\xb7\\\xbdN\x10=!\x94!*?\xa2" +
+	"\xca`\x133\xac\xc0e\xbc\x94\xc5\xe8\x85{\x8f\x91$" +
+	"h\x84\xc9p\xb2\x06\xc4$\xa0S0\x8c\xdc\xaa\xf1\x91" +
+	"\x9a\xb4\xd5\x01\xcb\x87hu\xe1\xf8\x05H\xc4\xa0\xcfB" +
+	"\xd2\xd0\xbb\xb2A!(\xaf+\xbe$\x9a\xd5^\xb4\x8d" +
+	"b\x01\x1a\xb3\xaa\xcd\xb3AU1\x8b\xfar\xd3\xc8\xaf" +
+	"An\xe65]\xcdMSo*A\xc0J(\x95\x04" +
+	"\xffn\xbd\x98\xef1\xf9\xb0\x86F\xd1j\xb7m\x9e\x17" +
+	"\x0b\xb6\x15H\xf4\xf1\x803\x88h\xa1<\xa2\x1b\x0bK" +
+	"\xd7\xa8\x033\xa9S\x8bC\xdc\x94\xd4#\x05\xa9qX" +
+	"\xcd\x15?Iy\x1a\xdf\xba{[\xbd\xd6\x1f\xc5\x1b\xd4" +
+	"\x1d\x12\x0c\x95\x94\x80\xad\xa6\xd7n\xea\xfc9m\xfaR" +
+	"2\x1e\x80%\xfd\xa9\xc6\xbd\x1f#\xab\x0fzG(\xdd" +
+	"?c\xf1\x07\xb8\xed\xfd\xa2\xb9\x82@\xb1\x18m\xab\xa7" +
+	"v\xba\x97[\xc9\x99\xa8\x1e\xce\xb3e\xca\x8b3\xea\xe2" +
+	"\x93\xf4p\x1f\xe3E:r\xd3d\x1d\xb9{\x92\x8e\xdc" +
+	"\x1b\xed\xc8B\xa9#S\xa3(0T6\x09\x98\xa4\xb1" +
+	"\x01\xeb\xc2}\xd48\xa1\xc7\x8fJ\x14\x0a]z\x96\x03" +
+	"\x8e\xf8\xd1\x1ci\x1f\xc1\x9egz443\xb5}\x94" +
+	"9\xad\xc1\x83\xe5\xc9L\x07\x8eV\xefQ\x8a\xb3\xb9," +
+	"\x0e\x10,\x92\xd0_VH\xfb7\x82 }W\xc4p" +
+	"\xd9\x82\xfenE\xba\xcf\x04A\xda#\xa2\x10,\xdb\xd0" +
+	"_\xaaI;o\x02A\xda!\"\x0bve\xe8\x8f\xfb" +
+	"\xcd\xa3U\x08\x82\xb4Y\xc4X\xb0\x1fD\x7fY m" +
+	"\x18\x02A\xd2D\x8c\x07k8\xf4\xb7F\xd2\xba1\x10" +
+	"\xa4>\xd1\xf1\x8d\x04\xad\x9e\x1em\xe8\xf81\x0a\x8dn" +
+	"\x94\xb6\xa1\xe3\xc3@\xf4A\x05@\x1b:>\xe6d\x1f" +
+	"\x07:].\x7f\x86\x84$M\x91m\x04\xbf\xbc\xfc\xc7" +
+	"R\x01\x806Tb\x18\xd9\x95\x00|R\xa8\xd3\xcb\x1b" +
+	"?M)\x99\xc4\xb9\xde;\xc1\x0e!r/\xa1\xb7\x1a" +
+	"\x86\xca\\aZ\xc0\x16\xfb8-\xfc\xa0M\xd2a\xba" +
+	"\xff\xff\x83\xfb\x0f\x12\xe0y\x96\xa1r8\x92\x8e/\x13" +
+	"\xf1E\x86\xca\x91\x08\xe0y\x85r\xf40C\xe5\xddp" +
+	"\xf1\xf2\xcf\x9b\x00\x94w\x19\xf6F\x00\x84\xf4!1~" +
+	"@m\xd6\x85\x0f\xe8\xc1\x878\xee\x02H'\xa8\xfd\xa6" +
+	"\\\xf8\x10\xf3\xe0\x83\x84\xfd\x00\xe9:\xa2\x9f\x1e\x85\x0f" +
+	"\xf3\xf0J\x80\xf4\\\xa2/@\x01E\x1eY\xda\x14\xcd" +
+	"\x10`\xe5\x8c\x81\x15\x9a>iO\xf27Ah/W" +
+	"\xb5\\\xd1\xe4\x10\xb6\xc4R\x91\xe8\x88tioE\xd4" +
+	"\xbe\x9e\xc2/M\xc1\x93E\x0bE\x10P<\xb5\xc9k" +
+	"F\x1d\xa3\xd34\x0d4\xcb\xc0\xe7\xe2\x10|\x06\xd8\x93" +
+	"0\xf4\xa5\x0c\x955\xe4\x8a6\xcf\x15J\x7f\x08\x97\x1b" +
+	"3j\xd1\xe2\x13t\x00\xc6\xcd`Z\xb6\x06\x8db." +
+	"\xdb\xcbA\xb4\xcd\xd12\x13L\x0bB\xd3<\xe9W\x9c" +
+	"\x84[q\xfc=,\xfa\xebV\xa9y/\x08\xd2\"\xaa" +
+	"8\xfej\x11\xfd\xa5\xba\xf4\x99\x87@\x90\xce\x08\x0b\x00" +
+	"\xfa6`\x86>>\xe5\xbd\x0fn\x8c\xb6a\x0f\xe2\x7f" +
+	"c\x86\xf4\xda\xcf)d\xfa\xb8U\x14\x95qq&}" +
+	"3\xf8\xe3\xa6,\xd3+?\xed8\xed7\x92\xff\x04\x00" +
+	"\x00\xff\xff\xed\xc3%H"
 
 func init() {
 	schemas.Register(schema_db8274f9144abc7e,
 		0x82c325a07ad22a65,
+		0x83ced0145b2f114b,
 		0x84cb9536a2cf6d3c,
 		0x85c8cea1ab1894f3,
+		0x9496331ab9cd463f,
+		0x97b3c5c260257622,
 		0x9b87b390babc2ccf,
 		0xa29a916d4ebdd894,
 		0xa353a3556df74984,
 		0xa766b24d4fe5da35,
+		0xb046e578094b1ead,
+		0xb4bf9861fe035d04,
+		0xb5f39f082b9ac18a,
 		0xb70431c0dc014915,
 		0xc082ef6e0d42ed1d,
 		0xc793e50592935b4a,
 		0xcbd96442ae3bb01a,
 		0xd4d18de97bb12de3,
+		0xdbaa9d03d52b62dc,
 		0xdc3ed6801961e502,
 		0xe3e37d096a5b564e,
+		0xe6646dec8feaa6ee,
+		0xea50d822450d1f17,
 		0xea58385c65416035,
 		0xf2c122394f447e8e,
 		0xf2c68e2547ec3866,
 		0xf41a0f001ad49e46,
+		0xf5f383d2785edb86,
+		0xf71695ec7fe85497,
+		0xf9cb7f4431a307d0,
 		0xfc5edf80e39c0796,
 		0xfeac5c8f4899ef7c)
 }

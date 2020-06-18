@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cloudflare/cloudflared/carrier"
+	"github.com/cloudflare/cloudflared/cmd/cloudflared/cliutil"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/config"
 	"github.com/cloudflare/cloudflared/h2mux"
 	"github.com/cloudflare/cloudflared/logger"
@@ -18,19 +19,31 @@ import (
 func StartForwarder(forwarder config.Forwarder, shutdown <-chan struct{}, logger logger.Service) error {
 	validURLString, err := validation.ValidateUrl(forwarder.Listener)
 	if err != nil {
-		logger.Errorf("Error validating origin URL: %s", err)
 		return errors.Wrap(err, "error validating origin URL")
 	}
 
 	validURL, err := url.Parse(validURLString)
 	if err != nil {
-		logger.Errorf("Error parsing origin URL: %s", err)
 		return errors.Wrap(err, "error parsing origin URL")
+	}
+
+	// get the headers from the config file and add to the request
+	headers := make(http.Header)
+	if forwarder.TokenClientID != "" {
+		headers.Set(h2mux.CFAccessClientIDHeader, forwarder.TokenClientID)
+	}
+
+	if forwarder.TokenSecret != "" {
+		headers.Set(h2mux.CFAccessClientSecretHeader, forwarder.TokenSecret)
+	}
+
+	if forwarder.Destination != "" {
+		headers.Add(h2mux.CFJumpDestinationHeader, forwarder.Destination)
 	}
 
 	options := &carrier.StartOptions{
 		OriginURL: forwarder.URL,
-		Headers:   make(http.Header), //TODO: TUN-2688 support custom headers from config file
+		Headers:   headers, //TODO: TUN-2688 support custom headers from config file
 	}
 
 	// we could add a cmd line variable for this bool if we want the SOCK5 server to be on the client side
@@ -46,9 +59,20 @@ func StartForwarder(forwarder config.Forwarder, shutdown <-chan struct{}, logger
 // (which you can put Access in front of)
 func ssh(c *cli.Context) error {
 	logDirectory, logLevel := config.FindLogSettings()
+
+	flagLogDirectory := c.String(sshLogDirectoryFlag)
+	if flagLogDirectory != "" {
+		logDirectory = flagLogDirectory
+	}
+
+	flagLogLevel := c.String(sshLogLevelFlag)
+	if flagLogLevel != "" {
+		logLevel = flagLogLevel
+	}
+
 	logger, err := logger.New(logger.DefaultFile(logDirectory), logger.LogLevelString(logLevel))
 	if err != nil {
-		return errors.Wrap(err, "error setting up logger")
+		return cliutil.PrintLoggerSetupError("error setting up logger", err)
 	}
 
 	// get the hostname from the cmdline and error out if its not provided
@@ -62,10 +86,10 @@ func ssh(c *cli.Context) error {
 	// get the headers from the cmdline and add them
 	headers := buildRequestHeaders(c.StringSlice(sshHeaderFlag))
 	if c.IsSet(sshTokenIDFlag) {
-		headers.Add(h2mux.CFAccessClientIDHeader, c.String(sshTokenIDFlag))
+		headers.Set(h2mux.CFAccessClientIDHeader, c.String(sshTokenIDFlag))
 	}
 	if c.IsSet(sshTokenSecretFlag) {
-		headers.Add(h2mux.CFAccessClientSecretHeader, c.String(sshTokenSecretFlag))
+		headers.Set(h2mux.CFAccessClientSecretHeader, c.String(sshTokenSecretFlag))
 	}
 
 	destination := c.String(sshDestinationFlag)

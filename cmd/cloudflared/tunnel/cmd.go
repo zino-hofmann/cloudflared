@@ -90,6 +90,8 @@ const (
 	// bastionFlag is to enable bastion, or jump host, operation
 	bastionFlag = "bastion"
 
+	logDirectoryFlag = "log-directory"
+
 	debugLevelWarning = "At debug level, request URL, method, protocol, content legnth and header will be logged. " +
 		"Response status, content length and header will also be logged in debug level."
 )
@@ -170,6 +172,7 @@ func Commands() []*cli.Command {
 	subcommands = append(subcommands, buildCreateCommand())
 	subcommands = append(subcommands, buildListCommand())
 	subcommands = append(subcommands, buildDeleteCommand())
+	subcommands = append(subcommands, buildRunCommand())
 
 	cmds = append(cmds, &cli.Command{
 		Name:      "tunnel",
@@ -204,7 +207,7 @@ func Commands() []*cli.Command {
 }
 
 func tunnel(c *cli.Context) error {
-	return StartServer(c, version, shutdownC, graceShutdownC)
+	return StartServer(c, version, shutdownC, graceShutdownC, nil)
 }
 
 func Init(v string, s, g chan struct{}) {
@@ -213,7 +216,12 @@ func Init(v string, s, g chan struct{}) {
 
 func createLogger(c *cli.Context, isTransport bool) (logger.Service, error) {
 	loggerOpts := []logger.Option{}
+
 	logPath := c.String("logfile")
+	if logPath == "" {
+		logPath = c.String(logDirectoryFlag)
+	}
+
 	if logPath != "" {
 		loggerOpts = append(loggerOpts, logger.DefaultFile(logPath))
 	}
@@ -221,16 +229,19 @@ func createLogger(c *cli.Context, isTransport bool) (logger.Service, error) {
 	logLevel := c.String("loglevel")
 	if isTransport {
 		logLevel = c.String("transport-loglevel")
+		if logLevel == "" {
+			logLevel = "fatal"
+		}
 	}
 	loggerOpts = append(loggerOpts, logger.LogLevelString(logLevel))
 
 	return logger.New(loggerOpts...)
 }
 
-func StartServer(c *cli.Context, version string, shutdownC, graceShutdownC chan struct{}) error {
+func StartServer(c *cli.Context, version string, shutdownC, graceShutdownC chan struct{}, namedTunnel *origin.NamedTunnelConfig) error {
 	logger, err := createLogger(c, false)
 	if err != nil {
-		return errors.Wrap(err, "error setting up logger")
+		return cliutil.PrintLoggerSetupError("error setting up logger", err)
 	}
 
 	_ = raven.SetDSN(sentryDSN)
@@ -401,6 +412,14 @@ func StartServer(c *cli.Context, version string, shutdownC, graceShutdownC chan 
 		c.Set("url", "ssh://"+localServerAddress)
 	}
 
+	url := c.String("url")
+	hostname := c.String("hostname")
+	if url == hostname && url != "" && hostname != "" {
+		errText := "hostname and url shouldn't match. See --help for more information"
+		logger.Error(errText)
+		return fmt.Errorf(errText)
+	}
+
 	if staticHost := hostnameFromURI(c.String("url")); isProxyDestinationConfigured(staticHost, c) {
 		listener, err := net.Listen("tcp", "127.0.0.1:")
 		if err != nil {
@@ -456,7 +475,7 @@ func StartServer(c *cli.Context, version string, shutdownC, graceShutdownC chan 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		errC <- origin.StartTunnelDaemon(ctx, tunnelConfig, connectedSignal, cloudflaredID, reconnectCh)
+		errC <- origin.StartTunnelDaemon(ctx, tunnelConfig, connectedSignal, cloudflaredID, reconnectCh, namedTunnel)
 	}()
 
 	return waitToShutdown(&wg, errC, shutdownC, graceShutdownC, c.Duration("grace-period"), logger)
@@ -465,7 +484,7 @@ func StartServer(c *cli.Context, version string, shutdownC, graceShutdownC chan 
 func Before(c *cli.Context) error {
 	logger, err := createLogger(c, false)
 	if err != nil {
-		return errors.Wrap(err, "error setting up logger")
+		return cliutil.PrintLoggerSetupError("error setting up logger", err)
 	}
 
 	if c.String("config") == "" {
@@ -825,6 +844,12 @@ func tunnelFlags(shouldHide bool) []cli.Flag {
 			EnvVars: []string{"TUNNEL_LOGFILE"},
 			Hidden:  shouldHide,
 		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    logDirectoryFlag,
+			Usage:   "Save application log to this directory for reporting issues.",
+			EnvVars: []string{"TUNNEL_LOGDIRECTORY"},
+			Hidden:  shouldHide,
+		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:   "ha-connections",
 			Value:  4,
@@ -1068,8 +1093,8 @@ func stdinControl(reconnectCh chan origin.ReconnectSignal, logger logger.Service
 				logger.Infof("Unknown command: %s", command)
 				fallthrough
 			case "help":
-				logger.Info(`Supported command: 
-reconnect [delay] 
+				logger.Info(`Supported command:
+reconnect [delay]
 - restarts one randomly chosen connection with optional delay before reconnect`)
 			}
 		}

@@ -2,7 +2,10 @@ package cliutil
 
 import (
 	"fmt"
+	"log"
 
+	"github.com/cloudflare/cloudflared/logger"
+	"github.com/pkg/errors"
 	"gopkg.in/urfave/cli.v2"
 )
 
@@ -34,6 +37,19 @@ func ErrorHandler(actionFunc cli.ActionFunc) cli.ActionFunc {
 			cli.HandleExitCoder(err)
 			err = cli.Exit(err.Error(), 1)
 		}
+		logger.SharedWriteManager.Shutdown()
 		return err
 	}
+}
+
+// PrintLoggerSetupError returns an error to stdout to notify when a logger can't start
+func PrintLoggerSetupError(msg string, err error) error {
+	l, le := logger.New()
+	if le != nil {
+		log.Printf("%s: %s", msg, err)
+	} else {
+		l.Errorf("%s: %s", msg, err)
+	}
+
+	return errors.Wrap(err, msg)
 }

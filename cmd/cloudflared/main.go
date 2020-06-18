@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/access"
+	"github.com/cloudflare/cloudflared/cmd/cloudflared/cliutil"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/config"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/tunnel"
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/updater"
-	"github.com/cloudflare/cloudflared/logger"
+	log "github.com/cloudflare/cloudflared/logger"
 	"github.com/cloudflare/cloudflared/metrics"
 	"github.com/cloudflare/cloudflared/overwatch"
 	"github.com/cloudflare/cloudflared/watcher"
@@ -61,7 +62,7 @@ func main() {
 	app := &cli.App{}
 	app.Name = "cloudflared"
 	app.Usage = "Cloudflare's command-line tool and agent"
-	app.ArgsUsage = "origin-url"
+	app.UsageText = "cloudflared [global options] [command] [command options]"
 	app.Copyright = fmt.Sprintf(
 		`(c) %d Cloudflare Inc.
    Your installation of cloudflared software constitutes a symbol of your signature indicating that you accept
@@ -128,7 +129,7 @@ func action(version string, shutdownC, graceShutdownC chan struct{}) cli.ActionF
 		tags := make(map[string]string)
 		tags["hostname"] = c.String("hostname")
 		raven.SetTagsContext(tags)
-		raven.CapturePanic(func() { err = tunnel.StartServer(c, version, shutdownC, graceShutdownC) }, nil)
+		raven.CapturePanic(func() { err = tunnel.StartServer(c, version, shutdownC, graceShutdownC, nil) }, nil)
 		exitCode := 0
 		if err != nil {
 			handleError(err)
@@ -165,11 +166,12 @@ func handleError(err error) {
 
 // cloudflared was started without any flags
 func handleServiceMode(shutdownC chan struct{}) error {
+	defer log.SharedWriteManager.Shutdown()
 	logDirectory, logLevel := config.FindLogSettings()
 
-	logger, err := logger.New(logger.DefaultFile(logDirectory), logger.LogLevelString(logLevel))
+	logger, err := log.New(log.DefaultFile(logDirectory), log.LogLevelString(logLevel))
 	if err != nil {
-		return errors.Wrap(err, "error setting up logger")
+		return cliutil.PrintLoggerSetupError("error setting up logger", err)
 	}
 	logger.Infof("logging to directory: %s", logDirectory)
 
@@ -187,7 +189,12 @@ func handleServiceMode(shutdownC chan struct{}) error {
 		return err
 	}
 
-	serviceManager := overwatch.NewAppManager(nil)
+	serviceCallback := func(t string, name string, err error) {
+		if err != nil {
+			logger.Errorf("%s service: %s encountered an error: %s", t, name, err)
+		}
+	}
+	serviceManager := overwatch.NewAppManager(serviceCallback)
 
 	appService := NewAppService(configManager, serviceManager, shutdownC, logger)
 	if err := appService.Run(); err != nil {

@@ -1,3 +1,51 @@
+2020.6.5
+- 2020-06-16 DEVTOOLS-7321: Don't skip macOS builds based on tag
+- 2020-06-16 fix for a flaky test
+- 2020-06-16 AUTH-2815 flag check was wrong. stupid oversight
+- 2020-06-16 TUN-3101: Tunnel list command should only show non-deleted, by default
+- 2020-06-16 TUN-3066: Command line action for tunnel run
+- 2020-06-16 TUN-3100 make updater report the right text
+
+2020.6.4
+- 2020-06-11 TUN-3085: Pass connection authentication information using TunnelAuth struct
+- 2020-06-15 TUN-3084: Generate and store tunnel_secret value during tunnel creation
+- 2020-06-16 AUTH-2815 add the log file to support the config.yaml file
+- 2020-06-02 TUN-3015: Add a new cap'n'proto RPC interface for connection registration as well as matching client and server implementations. The old interface extends the new one for backward compatibility.
+
+2020.6.3
+- 2020-06-15 DEVTOOLS-7321: Add openssh-client pkg for missing ssh-keyscan
+- 2020-06-15 AUTH-2813 adds back a single file support a cloudflared log file
+
+2020.6.2
+- 2020-06-11 AUTH-2648 updated usage text
+- 2020-06-11 AUTH-2763 don't redirect from curl command
+- 2020-06-12 TUN-3090: Upgrade crypto dep
+- 2020-06-11 TUN-3038: Add connections to tunnel list table
+- 2020-06-12 AUTH-2810 added warn for backwards compatibility sake
+
+2020.6.1
+- 2020-06-09 AUTH-2796 fixed windows build
+
+2020.6.0
+- 2020-06-05 AUTH-2645 protect against user mistaken flag input
+- 2020-06-05 AUTH-2687 don't copy config unnecessarily
+- 2020-06-05 AUTH-2169 make access login page more generic
+- 2020-06-05 AUTH-2729 added log file and level to cmd flags to match config file settings
+- 2020-06-08 AUTH-2785 service token flag fix and logger fix
+- 2020-05-20 AUTH-2682: Create buster build
+- 2020-05-21 TUN-2928, TUN-2929, TUN-2930: Add tunnel subcommands to interact with tunnel store service
+- 2020-05-29 Adding support for multi-architecture images and binaries (#184)
+- 2020-05-29 TUN-3019: Remove declarative tunnel entry code
+- 2020-05-29 TUN-3020: Remove declarative tunnel related RPC code
+- 2020-05-13 AUTH-2505 added aliases
+- 2020-05-14 AUTH-2529 added deprecation text to db-connect command
+- 2020-05-18 AUTH-2686: Added error handling to tunnel subcommand
+- 2020-05-04 AUTH-2369: RDP Bastion prototype
+- 2020-04-29 AUTH-2596 added new logger package and replaced logrus
+- 2020-04-25 DEVTOOLS-7321: Use SSH key from env for pushing to GitHub
+- 2020-04-25 DEVTOOLS-7321: Push to a test branch instead of to master
+- 2020-03-30 DEVTOOLS-7321: Add scripts for macOS builds and homebrew uploads
+
 2020.5.1
 - 2020-05-07 TUN-2860: Enable quick reconnect feature by default
 - 2020-05-07 AUTH-2564: error handling and minor fixes

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cloudflare/cloudflared/logger"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -26,13 +27,20 @@ var (
 )
 
 type Tunnel struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          string       `json:"id"`
+	Name        string       `json:"name"`
+	CreatedAt   time.Time    `json:"created_at"`
+	DeletedAt   time.Time    `json:"deleted_at"`
+	Connections []Connection `json:"connections"`
+}
+
+type Connection struct {
+	ColoName string    `json:"colo_name"`
+	ID       uuid.UUID `json:"uuid"`
 }
 
 type Client interface {
-	CreateTunnel(name string) (*Tunnel, error)
+	CreateTunnel(name string, tunnelSecret []byte) (*Tunnel, error)
 	GetTunnel(id string) (*Tunnel, error)
 	DeleteTunnel(id string) error
 	ListTunnels() ([]Tunnel, error)
@@ -67,15 +75,17 @@ func NewRESTClient(baseURL string, accountTag string, authToken string, logger l
 }
 
 type newTunnel struct {
-	Name string `json:"name"`
+	Name         string `json:"name"`
+	TunnelSecret []byte `json:"tunnel_secret"`
 }
 
-func (r *RESTClient) CreateTunnel(name string) (*Tunnel, error) {
+func (r *RESTClient) CreateTunnel(name string, tunnelSecret []byte) (*Tunnel, error) {
 	if name == "" {
 		return nil, errors.New("tunnel name required")
 	}
 	body, err := json.Marshal(&newTunnel{
-		Name: name,
+		Name:         name,
+		TunnelSecret: tunnelSecret,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to serialize new tunnel request")
